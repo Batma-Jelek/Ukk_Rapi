@@ -34,6 +34,13 @@
             justify-content: space-between;
         }
 
+        .mobile-nav-bar,
+        .mobile-nav-backdrop,
+        .mobile-nav-close,
+        .mobile-profile {
+            display: none;
+        }
+
         .sidebar-header h2 {
             font-size: 22px;
             color: #38bdf8;
@@ -137,6 +144,215 @@
             .grid-2 {
                 grid-template-columns: 1fr;
             }
+
+            .dashboard-container {
+                display: block;
+            }
+
+            .mobile-nav-bar {
+                position: sticky;
+                top: 0;
+                z-index: 900;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                min-height: 60px;
+                padding: 10px 16px;
+                background: #ffffff;
+                border-bottom: 1px solid #e2e8f0;
+                color: #0f172a;
+            }
+
+            .mobile-menu-toggle,
+            .mobile-nav-close {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                border: 0;
+                border-radius: 8px;
+                background: transparent;
+                color: #334155;
+                cursor: pointer;
+            }
+
+            .mobile-menu-toggle svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            .mobile-nav-backdrop.is-open {
+                position: fixed;
+                inset: 0;
+                z-index: 1000;
+                display: block;
+                border: 0;
+                background: rgba(15, 23, 42, 0.48);
+            }
+
+            .sidebar {
+                position: fixed;
+                inset: 0 auto 0 0;
+                z-index: 1001;
+                display: flex;
+                width: min(320px, 86vw);
+                height: 100vh;
+                height: 100dvh;
+                padding: 16px 14px;
+                overflow-y: auto;
+                background: #ffffff;
+                color: #1e293b;
+                box-shadow: 12px 0 32px rgba(15, 23, 42, 0.12);
+                transform: translateX(-105%);
+                transition: transform 0.25s ease;
+            }
+
+            .sidebar.is-open {
+                transform: translateX(0);
+            }
+
+            .sidebar-header {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                min-height: 44px;
+            }
+
+            .sidebar-header h2,
+            .sidebar-header small {
+                display: none;
+            }
+
+            .mobile-nav-close {
+                font-size: 30px;
+                line-height: 1;
+            }
+
+            .sidebar-nav {
+                flex-direction: column;
+                gap: 8px;
+                margin-top: 16px;
+                overflow: visible;
+            }
+
+            .nav-link {
+                flex: initial;
+                min-height: 46px;
+                color: #334155;
+                white-space: normal;
+            }
+
+            .nav-link:hover,
+            .nav-link.active {
+                background: #f1f5f9;
+                color: #0f172a;
+            }
+
+            .nav-link svg {
+                width: 20px;
+                height: 20px;
+                flex: 0 0 20px;
+                color: #64748b;
+            }
+
+            .mobile-profile {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 20px 8px 8px;
+            }
+
+            .mobile-profile-avatar {
+                display: grid;
+                width: 44px;
+                height: 44px;
+                flex: 0 0 44px;
+                place-items: center;
+                border-radius: 50%;
+                background: #e0f2fe;
+                color: #0369a1;
+                font-size: 17px;
+                font-weight: 700;
+            }
+
+            .mobile-profile strong,
+            .mobile-profile small {
+                display: block;
+            }
+
+            .mobile-profile strong {
+                overflow: hidden;
+                max-width: 210px;
+                color: #1e293b;
+                font-size: 14px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .mobile-profile small {
+                margin-top: 3px;
+                color: #64748b;
+                font-size: 12px;
+            }
+
+            .sidebar-footer {
+                flex-direction: column;
+                align-items: stretch;
+                margin-top: auto;
+                padding-top: 16px;
+                border-color: #e2e8f0;
+            }
+
+            .sidebar-footer .user-name {
+                display: none;
+            }
+
+            .btn-logout {
+                width: 100%;
+                min-width: 100px;
+            }
+
+            .main-content {
+                min-width: 0;
+                padding: 22px 18px;
+            }
+
+            .grid-cards {
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+            }
+
+            .form-row {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-link {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+
+            .main-content {
+                padding: 16px 12px;
+            }
+
+            .content-header h1 {
+                font-size: 21px;
+                line-height: 1.3;
+            }
+
+            .card {
+                padding: 18px 14px;
+            }
+
+            .form-row {
+                gap: 0;
+            }
+
+            .grid-cards {
+                grid-template-columns: minmax(0, 1fr);
+            }
         }
 
         .card {
@@ -239,18 +455,51 @@
 <body>
 
     <div class="dashboard-container">
+        <header class="mobile-nav-bar">
+            <button type="button" class="mobile-menu-toggle" onclick="openMobileNav()"
+                aria-label="Buka menu" aria-controls="mobileSidebar" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" aria-hidden="true">
+                    <path d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <strong>RAPI-Web</strong>
+        </header>
+        <button type="button" class="mobile-nav-backdrop" onclick="closeMobileNav()"
+            aria-label="Tutup menu"></button>
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="mobileSidebar">
             <div>
                 <div class="sidebar-header">
                     <h2>RAPI-Web</h2>
                     <small>Panel Guru</small>
+                    <button type="button" class="mobile-nav-close" onclick="closeMobileNav()"
+                        aria-label="Tutup menu">&times;</button>
+                </div>
+                <div class="mobile-profile">
+                    <span class="mobile-profile-avatar" id="mobileProfileAvatar">G</span>
+                    <div>
+                        <strong id="mobileProfileName">Guru</strong>
+                        <small>Panel Guru</small>
+                    </div>
                 </div>
 
                 <nav class="sidebar-nav">
                     <!-- Modifikasi link menjadi fungsi showTab -->
-                    <a class="nav-link active" onclick="showTab('layananTab', this)"> Form Layanan Guru</a>
-                    <a class="nav-link" onclick="showTab('kalenderTab', this)"> Kalender Jadwal</a>
+                    <a class="nav-link active" onclick="showTab('layananTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+                            <path d="M8 8h8M8 12h8M8 16h5"></path>
+                        </svg>Form Layanan Guru
+                    </a>
+                    <a class="nav-link" onclick="showTab('kalenderTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                            <path d="M16 3v4M8 3v4M3 10h18M8 14h2M14 14h2M8 17h2"></path>
+                        </svg>Kalender Jadwal
+                    </a>
                 </nav>
             </div>
 
@@ -375,6 +624,40 @@
         }
 
         document.getElementById('userNameLabel').innerText = user.fullname || user.name || 'Guru';
+
+        const mobileProfileName = user.fullname || user.name || 'Guru';
+        document.getElementById('mobileProfileName').textContent = mobileProfileName;
+        document.getElementById('mobileProfileAvatar').textContent = mobileProfileName
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map(part => part.charAt(0))
+            .join('')
+            .toUpperCase() || 'G';
+
+        function openMobileNav() {
+            document.getElementById('mobileSidebar').classList.add('is-open');
+            document.querySelector('.mobile-nav-backdrop').classList.add('is-open');
+            document.querySelector('.mobile-menu-toggle').setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileNav() {
+            document.getElementById('mobileSidebar').classList.remove('is-open');
+            document.querySelector('.mobile-nav-backdrop').classList.remove('is-open');
+            document.querySelector('.mobile-menu-toggle').setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+        }
+
+        document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+            link.addEventListener('click', closeMobileNav);
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                closeMobileNav();
+            }
+        });
 
         // TAB SYSTEM 
         function showTab(tabId, element) {

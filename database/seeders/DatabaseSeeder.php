@@ -31,8 +31,8 @@ class DatabaseSeeder extends Seeder
         User::create([
             'username' => 'pic_lab',
             'password' => Hash::make('password123'),
-            'fullname' => 'Budi Santoso (PIC Lab)',
-            'phone_number' => '089876543210',
+            'fullname' => 'Bu Lauhin (PIC Lab)',
+            'phone_number' => '088239057040',
             'role_id' => $picRole->id,
         ]);
 

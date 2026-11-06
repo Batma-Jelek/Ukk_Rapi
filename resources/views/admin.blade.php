@@ -33,6 +33,13 @@
             justify-content: space-between;
         }
 
+        .mobile-nav-bar,
+        .mobile-nav-backdrop,
+        .mobile-nav-close,
+        .mobile-profile {
+            display: none;
+        }
+
         .sidebar-header h2 {
             font-size: 22px;
             color: #38bdf8;
@@ -398,25 +405,314 @@
                 padding: 16px;
             }
         }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 220px;
+                flex: 0 0 220px;
+            }
+
+            .main-content {
+                min-width: 0;
+                padding: 24px 20px;
+            }
+
+            .table-responsive table {
+                min-width: 680px;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .dashboard-container {
+                display: block;
+            }
+
+            .mobile-nav-bar {
+                position: sticky;
+                top: 0;
+                z-index: 900;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                min-height: 60px;
+                padding: 10px 16px;
+                background: #ffffff;
+                border-bottom: 1px solid #e2e8f0;
+                color: #0f172a;
+            }
+
+            .mobile-menu-toggle,
+            .mobile-nav-close {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                border: 0;
+                border-radius: 8px;
+                background: transparent;
+                color: #334155;
+                cursor: pointer;
+            }
+
+            .mobile-menu-toggle svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            .mobile-nav-backdrop.is-open {
+                position: fixed;
+                inset: 0;
+                z-index: 1000;
+                display: block;
+                border: 0;
+                background: rgba(15, 23, 42, 0.48);
+            }
+
+            .sidebar {
+                position: fixed;
+                inset: 0 auto 0 0;
+                z-index: 1001;
+                display: flex;
+                width: min(320px, 86vw);
+                height: 100vh;
+                height: 100dvh;
+                padding: 16px 14px;
+                overflow-y: auto;
+                background: #ffffff;
+                color: #1e293b;
+                box-shadow: 12px 0 32px rgba(15, 23, 42, 0.12);
+                transform: translateX(-105%);
+                transition: transform 0.25s ease;
+            }
+
+            .sidebar.is-open {
+                transform: translateX(0);
+            }
+
+            .sidebar-header {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                min-height: 44px;
+            }
+
+            .sidebar-header h2,
+            .sidebar-header small {
+                display: none;
+            }
+
+            .mobile-nav-close {
+                font-size: 30px;
+                line-height: 1;
+            }
+
+            .sidebar-nav {
+                flex-direction: column;
+                gap: 4px;
+                margin-top: 28px;
+                padding: 0;
+                overflow: visible;
+            }
+
+            .nav-link {
+                flex: initial;
+                min-height: 46px;
+                padding: 11px 12px;
+                color: #334155;
+                white-space: normal;
+            }
+
+            .nav-link:hover,
+            .nav-link.active {
+                background: #f1f5f9;
+                color: #0f172a;
+            }
+
+            .nav-link svg {
+                width: 20px;
+                height: 20px;
+                flex: 0 0 20px;
+                color: #64748b;
+            }
+
+            .mobile-profile {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 20px 8px 8px;
+            }
+
+            .mobile-profile-avatar {
+                display: grid;
+                width: 44px;
+                height: 44px;
+                flex: 0 0 44px;
+                place-items: center;
+                border-radius: 50%;
+                background: #e0f2fe;
+                color: #0369a1;
+                font-size: 17px;
+                font-weight: 700;
+            }
+
+            .mobile-profile strong,
+            .mobile-profile small {
+                display: block;
+            }
+
+            .mobile-profile strong {
+                overflow: hidden;
+                max-width: 210px;
+                color: #1e293b;
+                font-size: 14px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .mobile-profile small {
+                margin-top: 3px;
+                color: #64748b;
+                font-size: 12px;
+            }
+
+            .sidebar-footer {
+                flex-direction: column;
+                align-items: stretch;
+                margin-top: auto;
+                padding-top: 16px;
+                border-color: #e2e8f0;
+            }
+
+            .sidebar-footer .user-name {
+                display: none;
+            }
+
+            .btn-logout {
+                width: 100%;
+            }
+
+            .main-content {
+                padding: 18px 14px;
+                overflow: visible;
+            }
+
+            .content-header h1 {
+                font-size: 21px;
+                line-height: 1.3;
+            }
+
+            .card {
+                padding: 18px 14px;
+            }
+
+            .form-row {
+                gap: 0;
+            }
+
+            .form-group {
+                min-width: 100%;
+            }
+
+            .main-content .grid-2 {
+                grid-template-columns: 1fr !important;
+            }
+
+            .grid-cards {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .table-responsive {
+                max-width: 100%;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .veto-modal {
+                padding: 12px;
+            }
+
+            .veto-modal-dialog {
+                width: 100%;
+                max-height: calc(100dvh - 24px);
+            }
+
+            .veto-modal-header,
+            .veto-modal-body,
+            .veto-modal-footer {
+                padding: 16px;
+            }
+        }
     </style>
 </head>
 
 <body>
 
     <div class="dashboard-container">
-        <aside class="sidebar">
+        <header class="mobile-nav-bar">
+            <button type="button" class="mobile-menu-toggle" onclick="openMobileNav()"
+                aria-label="Buka menu" aria-controls="mobileSidebar" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" aria-hidden="true">
+                    <path d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <strong>RAPI-Web</strong>
+        </header>
+        <button type="button" class="mobile-nav-backdrop" onclick="closeMobileNav()"
+            aria-label="Tutup menu"></button>
+        <aside class="sidebar" id="mobileSidebar">
             <div>
                 <div class="sidebar-header">
                     <h2>RAPI-Web</h2>
                     <small>Panel Waka / Admin</small>
+                    <button type="button" class="mobile-nav-close" onclick="closeMobileNav()"
+                        aria-label="Tutup menu">&times;</button>
+                </div>
+                <div class="mobile-profile">
+                    <span class="mobile-profile-avatar" id="mobileProfileAvatar">A</span>
+                    <div>
+                        <strong id="mobileProfileName">Admin</strong>
+                        <small>Panel Waka / Admin</small>
+                    </div>
                 </div>
                 <nav class="sidebar-nav">
-                    <a class="nav-link active" onclick="showTab('pengajuanTab', this)">Persetujuan Agenda</a>
-                    <a class="nav-link" onclick="showTab('ruanganTab', this)">Manajemen Ruangan</a>
-                    <a class="nav-link" onclick="showTab('perbaikanTab', this)">Monitoring Perbaikan</a>
-                    <a class="nav-link" onclick="showTab('kalenderTab', this)">Kalender Jadwal</a>
-                    <a class="nav-link" onclick="showTab('peminjamanTab', this)">Pengajuan Peminjaman</a>
-                    <a class="nav-link" onclick="showTab('laporkerusakanTab', this)">Laporan Kerusakan</a>
+                    <a class="nav-link active" onclick="showTab('pengajuanTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h5"></path>
+                        </svg>Persetujuan Agenda
+                    </a>
+                    <a class="nav-link" onclick="showTab('ruanganTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M4 20V5l8-2 8 2v15M9 20v-5h6v5M8 8h.01M16 8h.01M8 11h.01M16 11h.01"></path>
+                        </svg>Manajemen Ruangan
+                    </a>
+                    <a class="nav-link" onclick="showTab('perbaikanTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M14 6a5 5 0 0 0-6.5 6.5L3 17l4 4 4.5-4.5A5 5 0 0 0 18 10l-3 3-4-4 3-3z"></path>
+                        </svg>Monitoring Perbaikan
+                    </a>
+                    <a class="nav-link" onclick="showTab('kalenderTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                            <path d="M16 3v4M8 3v4M3 10h18M8 14h2M14 14h2M8 17h2"></path>
+                        </svg>Kalender Jadwal
+                    </a>
+                    <a class="nav-link" onclick="showTab('peminjamanTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h4"></path>
+                        </svg>Pengajuan Peminjaman
+                    </a>
+                    <a class="nav-link" onclick="showTab('laporkerusakanTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 3 2.8 19h18.4L12 3zM12 9v4M12 16h.01"></path>
+                        </svg>Laporan Kerusakan
+                    </a>
                 </nav>
             </div>
             <div class="sidebar-footer">
@@ -677,6 +973,40 @@
         }
 
         document.getElementById('userNameLabel').innerText = user.fullname || user.name || 'Admin';
+
+        const mobileProfileName = user.fullname || user.name || 'Admin';
+        document.getElementById('mobileProfileName').textContent = mobileProfileName;
+        document.getElementById('mobileProfileAvatar').textContent = mobileProfileName
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map(part => part.charAt(0))
+            .join('')
+            .toUpperCase() || 'A';
+
+        function openMobileNav() {
+            document.getElementById('mobileSidebar').classList.add('is-open');
+            document.querySelector('.mobile-nav-backdrop').classList.add('is-open');
+            document.querySelector('.mobile-menu-toggle').setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileNav() {
+            document.getElementById('mobileSidebar').classList.remove('is-open');
+            document.querySelector('.mobile-nav-backdrop').classList.remove('is-open');
+            document.querySelector('.mobile-menu-toggle').setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+        }
+
+        document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+            link.addEventListener('click', closeMobileNav);
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                closeMobileNav();
+            }
+        });
 
         function showTab(tabId, element) {
             document.querySelectorAll('.section-tab').forEach(tab => tab.classList.remove('active'));
