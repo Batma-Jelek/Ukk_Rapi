@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Waka / Admin - RAPI Sekolah</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: #0f172a;
+            color: #ffffff;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sidebar-header h2 {
+            font-size: 22px;
+            color: #38bdf8;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header small {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .sidebar-nav {
+            margin-top: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            color: #cbd5e1;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: #0284c7;
+            color: #ffffff;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid #334155;
+            padding-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .user-name {
+            font-size: 13px;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .content-header h1 {
+            font-size: 24px;
+            color: #0f172a;
+            margin-bottom: 24px;
+        }
+
+        .section-tab {
+            display: none;
+        }
+
+        .section-tab.active {
+            display: block;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+
+        .card h3 {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+
+
+        /* Memberi jarak antar baris form */
+        .form-group {
+            margin-bottom: 18px;
+            /* Jarak antar elemen input */
+        }
+
+        /* Memberi jarak antara teks label dengan kotak input */
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333333;
+        }
+
+        /* Memberi jarak atas khusus untuk tombol submit */
+        .btn-submit {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #e00000;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: #0284c7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-warning {
+            background-color: #f50b0b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background-color: #0369a1;
+        }
+
+        .btn-warning:hover {
+            background-color: #d30909;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #475569;
+            padding: 12px 16px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-warning {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+
+        .badge-success {
+            background-color: #d1fae5;
+            color: #059669;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-approve {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            margin-right: 4px;
+        }
+
+        .btn-reject {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .veto-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        .veto-modal.is-open {
+            display: flex;
+        }
+
+        .veto-modal-dialog {
+            width: min(100%, 520px);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .veto-modal-header,
+        .veto-modal-body,
+        .veto-modal-footer {
+            padding: 20px 24px;
+        }
+
+        .veto-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            background: #fef3c7;
+            border-bottom: 1px solid #fde68a;
+        }
+
+        .veto-modal-header h2 {
+            color: #78350f;
+            font-size: 18px;
+        }
+
+        .veto-modal-close {
+            border: 0;
+            background: transparent;
+            color: #475569;
+            font-size: 28px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .veto-modal-body .form-group {
+            margin-bottom: 18px;
+        }
+
+        .veto-modal-body select,
+        .veto-modal-body textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .veto-modal-body textarea {
+            resize: vertical;
+        }
+
+        .veto-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 6px;
+            background: #64748b;
+            color: #ffffff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-veto-submit {
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 6px;
+            background: #f59e0b;
+            color: #1e293b;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        @media (max-width: 480px) {
+            .veto-modal {
+                padding: 12px;
+            }
+
+            .veto-modal-header,
+            .veto-modal-body,
+            .veto-modal-footer {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div>
+                <div class="sidebar-header">
+                    <h2>RAPI-Web</h2>
+                    <small>Panel Waka / Admin</small>
+                </div>
+                <nav class="sidebar-nav">
+                    <a class="nav-link active" onclick="showTab('pengajuanTab', this)">Persetujuan Agenda</a>
+                    <a class="nav-link" onclick="showTab('ruanganTab', this)">Manajemen Ruangan</a>
+                    <a class="nav-link" onclick="showTab('perbaikanTab', this)">Monitoring Perbaikan</a>
+                    <a class="nav-link" onclick="showTab('kalenderTab', this)">Kalender Jadwal</a>
+                    <a class="nav-link" onclick="showTab('peminjamanTab', this)">Pengajuan Peminjaman</a>
+                    <a class="nav-link" onclick="showTab('laporkerusakanTab', this)">Laporan Kerusakan</a>
+                </nav>
+            </div>
+            <div class="sidebar-footer">
+                <span id="userNameLabel" class="user-name">Loading...</span>
+                <button onclick="logout()" class="btn-logout">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- Tab 1: Persetujuan Agenda -->
+            <div id="pengajuanTab" class="section-tab active">
+                <header class="content-header">
+                    <h1>Persetujuan Pengajuan Agenda Ruangan</h1>
+                </header>
+                <div class="card">
+                    <h3>Daftar Pengajuan Agenda Ruangan</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Kegiatan</th>
+                                    <th>Ruangan</th>
+                                    <th>Waktu</th>
+                                    <th>Pengaju</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eventsTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: #64748b; padding: 16px;">Memuat
+                                        data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Manajemen Ruangan -->
+            <div id="ruanganTab" class="section-tab">
+                <header class="content-header">
+                    <h1>Manajemen Ruangan Sekolah</h1>
+                </header>
+                <div class="card">
+                    <h3> Tambah Ruangan Baru</h3>
+                    <form id="addRoomForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nama Ruangan</label>
+                                <input type="text" id="room_name" placeholder="Contoh: Lab Komputer 1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Kapasitas (Orang)</label>
+                                <input type="number" id="capacity" placeholder="30" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Lokasi / Gedung</label>
+                                <input type="text" id="location" placeholder="Contoh: Gedung B Lantai 2" required>
+                            </div>
+                            <div class="form-group">
+                                <label>PIC Ruangan</label>
+                                <select id="pic_id">
+                                    <option value="">-- Pilih PIC --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Tambah Ruangan</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3> Daftar Ruangan</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nama Ruangan</th>
+                                    <th>Kapasitas</th>
+                                    <th>Lokasi</th>
+                                    <th>PIC Ruangan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roomsTableBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: #64748b; padding: 16px;">Memuat
+                                        ruangan...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Monitoring Perbaikan -->
+            <div id="perbaikanTab" class="section-tab">
+                <header class="content-header">
+                    <h1>Monitoring Perbaikan Kerusakan & Alert PIC</h1>
+                </header>
+                <div class="card">
+                    <h3> Daftar Laporan Kerusakan Ruangan</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ruangan</th>
+                                    <th>Deskripsi Kerusakan</th>
+                                    <th>Pelapor</th>
+                                    <th>Status Perbaikan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="complaintsTableBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: #64748b; padding: 16px;">Memuat
+                                        laporan perbaikan...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!--kalender -->
+            <div id="kalenderTab" class="section-tab">
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="grid-2" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="filterRoom">Filter Berdasarkan Ruangan</label>
+                            <select id="filterRoom" class="form-control" onchange="renderCalendar()">
+                                <option value="">-- Semua Ruangan --</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="filterDate">Filter Tanggal</label>
+                            <input type="date" id="filterDate" class="form-control" onchange="renderCalendar()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Container Grid Agenda -->
+                <h3 style="margin-bottom: 16px;">Jadwal Agenda Disetujui</h3>
+                <div id="calendarGrid" class="grid-cards">
+                    <p>Memuat jadwal kalender...</p>
+                </div>
+            </div>
+            <div id="peminjamanTab" class="section-tab">
+                <div class="card">
+                    <h3> Pengajuan Agenda Ruangan</h3>
+                    <form id="eventForm">
+                        <div class="form-group">
+                            <label>Nama Kegiatan / Agenda</label>
+                            <input type="text" id="event_name" placeholder="Contoh: Rapat Koordinasi Ulangan" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Pilih Ruangan</label>
+                            <select id="event_room_id" required>
+                                <option value="">-- Pilih Ruangan --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tanggal Pelaksanaan</label>
+                            <input type="date" id="date" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Waktu Mulai</label>
+                                <input type="time" id="start_time" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Waktu Selesai</label>
+                                <input type="time" id="end_time" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Kirim Pengajuan Agenda</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Form 2: Lapor Kerusakan Fasilitas -->
+            <div id="laporkerusakanTab" class="section-tab">
+                <div class="card">
+                    <h3> Lapor Kerusakan Ruangan</h3>
+                    <form id="complaintForm">
+                        <div class="form-group">
+                            <label>Pilih Ruangan Bermasalah</label>
+                            <select id="complaint_room_id" required>
+                                <option value="">-- Pilih Ruangan --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Deskripsi Kerusakan</label>
+                            <textarea id="description"
+                                placeholder="Jelaskan detail kerusakan, contoh: AC tidak dingin / Proyektor mati..."
+                                required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Foto Bukti Kerusakan (Opsional)</label>
+                            <input type="file" name="photo" id="photo" accept="image/*" capture="environment">
+                        </div>
+
+                        <input type="hidden" name="photo_base64" id="input_photo_base64">
+
+                        <button type="submit" class="btn-warning">Kirim Laporan Kerusakan</button>
+                    </form>
+                </div>
+            </div>
+    </div>
+    </div>
+
+    </main>
+    </div>
+
+    <!-- Modal Hak Veto Pindah Ruangan -->
+    <div class="veto-modal" id="vetoModal" aria-hidden="true">
+        <div class="veto-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="vetoModalTitle">
+            <div class="veto-modal-header">
+                    <h2 id="vetoModalTitle">Pindah Ruang Agenda</h2>
+                    <button type="button" class="veto-modal-close" onclick="closeVetoModal()"
+                        aria-label="Tutup">&times;</button>
+                </div>
+                <div class="veto-modal-body">
+                    <input type="hidden" id="veto_event_id">
+
+                    <div class="form-group">
+                        <label for="veto_new_room_id">Pilih Ruangan Baru</label>
+                        <select id="veto_new_room_id" required>
+                            <option value="">-- Pilih Ruangan Pengganti --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="veto_reassignment_reason">Alasan Pemindahan (Wajib)</label>
+                        <textarea id="veto_reassignment_reason" rows="3"
+                            placeholder="Jelaskan alasan pemindahan (misal: Ruangan dipakai untuk Acara Utama Sekolah)..."
+                            required></textarea>
+                    </div>
+                </div>
+                <div class="veto-modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeVetoModal()">Batal</button>
+                    <button type="button" onclick="submitVeto()" class="btn-veto-submit">Eksekusi Veto</button>
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        if (!token || !user || user.role_id !== 1) {
+            window.location.href = '/';
+        }
+
+        document.getElementById('userNameLabel').innerText = user.fullname || user.name || 'Admin';
+
+        function showTab(tabId, element) {
+            document.querySelectorAll('.section-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
+
+            if (tabId === 'ruanganTab') {
+                loadPicUsers();
+                loadRooms();
+            }
+        }
+
+        // 1. Load Data Agenda (Toleran Case-Sensitivity)
+        async function loadEvents() {
+            try {
+                const response = await fetch('/api/events', {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+                });
+                const result = await response.json();
+                const events = Array.isArray(result) ? result : (result.data || []);
+                const tableBody = document.getElementById('eventsTableBody');
+
+                if (!events || events.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 16px;">Belum ada pengajuan.</td></tr>`;
+                    return;
+                }
+
+                let rows = '';
+                events.forEach(event => {
+                    const statusLower = (event.status || '').toLowerCase();
+                    let statusBadge = '<span class="badge badge-warning">Pending</span>';
+                    if (statusLower === 'approved') statusBadge = '<span class="badge badge-success">Disetujui</span>';
+                    if (statusLower === 'rejected') statusBadge = '<span class="badge badge-danger">Ditolak</span>';
+
+                    let actionButtons = '-';
+                    if (statusLower === 'pending') {
+                        actionButtons = `
+    <button onclick="approveEvent(${event.id})" class="btn-approve">Approve</button>
+    <button onclick="rejectEvent(${event.id})" class="btn-reject">Reject</button>
+    `;
+                    } else if (statusLower === 'approved' || statusLower === 'moved') {
+                        actionButtons = `
+    <button onclick="openVetoModal(${event.id})" class="btn-warning" style="background-color: #ffc107; color: #000; border: none; padding: 5px 10px; border-radius: 5px; font-weight: 600; cursor: pointer;">
+        <i class="bi bi-arrow-left-right"></i> Pindah Ruang
+    </button>
+    `;
+                    }
+
+                    rows += `
+                <tr>
+                    <td><strong>${event.event_name}</strong></td>
+                    <td>${event.room ? event.room.room_name : '-'}</td>
+                    <td>${event.date} (${event.start_time} - ${event.end_time})</td>
+                    <td>${event.user ? (event.user.fullname || event.user.name) : 'Guru'}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actionButtons}</td>
+                </tr>
+            `;
+                });
+                tableBody.innerHTML = rows;
+            } catch (error) {
+                document.getElementById('eventsTableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 16px;">Gagal memuat data pengajuan agenda.</td></tr>`;
+            }
+        }
+
+        // 2. Load Daftar Ruangan (Toleran berbagai struktur JSON & Nama Kolom)
+        async function loadRooms() {
+            const tableBody = document.getElementById('roomsTableBody');
+            if (!tableBody) return;
+
+            try {
+                const response = await fetch('/api/rooms', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error Status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // Ekstraksi data aman untuk Array biasa, { data: [...] }, maupun Paginated { data: { data: [...] } }
+                let rooms = [];
+                if (Array.isArray(result)) {
+                    rooms = result;
+                } else if (Array.isArray(result.data)) {
+                    rooms = result.data;
+                } else if (result.data && Array.isArray(result.data.data)) {
+                    rooms = result.data.data;
+                }
+
+                const eventRoomSelect = document.getElementById('event_room_id');
+                if (eventRoomSelect) {
+                    eventRoomSelect.innerHTML = '<option value="">-- Pilih Ruangan --</option>';
+
+                    rooms.forEach(room => {
+                        const option = document.createElement('option');
+                        option.value = room.id;
+                        option.textContent = room.room_name || room.name || 'Tanpa Nama';
+                        eventRoomSelect.appendChild(option);
+                    });
+                }
+
+                const complaintRoomSelect = document.getElementById('complaint_room_id');
+                if (complaintRoomSelect) {
+                    complaintRoomSelect.innerHTML = '<option value="">-- Pilih Ruangan --</option>';
+
+                    rooms.forEach(room => {
+                        const option = document.createElement('option');
+                        option.value = room.id;
+                        option.textContent = room.room_name || room.name || 'Tanpa Nama';
+                        complaintRoomSelect.appendChild(option);
+                    });
+                }
+
+                if (rooms.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 16px; color: #64748b;">Belum ada ruangan.</td></tr>`;
+                    return;
+                }
+
+                let rows = '';
+                rooms.forEach(r => {
+                    // Toleransi jika nama kolom di DB adalah 'name' atau 'room_name'
+                    const roomName = r.room_name || r.name || 'Tanpa Nama';
+
+                    // Toleransi jika relasi PIC bernama 'pic' atau 'user'
+                    let picName = 'Belum Ditentukan';
+                    if (r.pic) {
+                        picName = r.pic.fullname || r.pic.name || picName;
+                    } else if (r.user) {
+                        picName = r.user.fullname || r.user.name || picName;
+                    }
+
+                    rows += `
+                <tr>
+                    <td><strong>${roomName}</strong></td>
+                    <td>${r.capacity || 0} Orang</td>
+                    <td>${r.location || '-'}</td>
+                    <td>${picName}</td>
+                </tr>
+            `;
+                });
+
+                tableBody.innerHTML = rows;
+
+            } catch (e) {
+                console.error('Error pada loadRooms():', e);
+                tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 16px; color: #ef4444;">Gagal memuat data ruangan. Silakan cek F12 Console.</td></tr>`;
+            }
+        }
+        // 3. Load User PIC untuk Dropdown
+        async function loadPicUsers() {
+            try {
+                const response = await fetch('/api/users?role_id=2', {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+                });
+                const result = await response.json();
+                const pics = Array.isArray(result) ? result : (result.data || []);
+
+                const picSelect = document.getElementById('pic_id');
+                if (picSelect) {
+                    let options = '<option value="">-- Pilih PIC --</option>';
+                    pics.forEach(pic => {
+                        options += `<option value="${pic.id}">${pic.fullname || pic.name}</option>`;
+                    });
+                    picSelect.innerHTML = options;
+                }
+            } catch (e) {
+                console.error('Gagal memuat PIC:', e);
+            }
+        }
+
+        // 4. Load Monitoring Perbaikan
+        async function loadComplaints() {
+            try {
+                const response = await fetch('/api/complaints', {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+                });
+                const result = await response.json();
+                const complaints = Array.isArray(result) ? result : (result.data || []);
+                // console.log('Loaded complaints:', complaints);
+                const tableBody = document.getElementById('complaintsTableBody');
+
+                let rows = '';
+                complaints.forEach(c => {
+                    let badge = c.status_repair === 'Sudah Diperbaiki' ? '<span class="badge badge-success">Selesai Diperbaiki</span>' : `<span class="badge badge-warning">${c.status_repair}</span>`;
+                    rows += `
+                <tr>
+                    <td><strong>${c.room ? c.room.room_name : '-'}</strong></td>
+                    <td>${c.description}</td>
+                    <td>${c.user ? (c.user.fullname || c.user.name) : 'Guru'}</td>
+                    <td>${badge}</td>
+                </tr>
+            `;
+                });
+                tableBody.innerHTML = rows || `<tr><td colspan="4" style="text-align: center; padding: 16px;">Belum ada laporan kerusakan.</td></tr>`;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Submit Form Tambah Ruangan
+        document.getElementById('addRoomForm')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const picSelect = document.getElementById('pic_id');
+            const picValue = picSelect ? picSelect.value : null;
+
+            // Ambil elemen input name/room_name secara fleksibel
+            const nameInput = document.getElementById('room_name') || document.getElementById('name');
+            const capacityInput = document.getElementById('capacity');
+            const locationInput = document.getElementById('location');
+
+            const payload = {
+                name: nameInput ? nameInput.value : '',          // Kolom DB Laravel standar
+                room_name: nameInput ? nameInput.value : '',     // Cadangan jika nama kolom 'room_name'
+                capacity: capacityInput ? parseInt(capacityInput.value) : 0,
+                location: locationInput ? locationInput.value : '',
+                pic_id: picValue ? parseInt(picValue) : null
+            };
+
+            try {
+                const res = await fetch('/api/rooms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    alert('Ruangan berhasil ditambahkan!');
+                    this.reset();
+                    await loadRooms(); // Memanggil ulang daftar ruangan secara otomatis
+                } else {
+                    const errorMsg = result.message || (result.errors ? Object.values(result.errors).flat().join('\n') : 'Gagal menambahkan ruangan.');
+                    alert(errorMsg);
+                }
+            } catch (err) {
+                console.error('Submit Room Error:', err);
+                alert('Terjadi kesalahan jaringan.');
+            }
+        });
+        async function approveEvent(id) {
+            if (!confirm('Setujui agenda ini?')) return;
+            await fetch(`/api/events/${id}/approve`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
+            loadEvents();
+        }
+
+// ====================================================
+// HAK VETO: FUNGSI DIPASANG KE WINDOW AGAR DIBACA ONCLICK
+// ====================================================
+
+window.openVetoModal = async function(eventId) {
+    const modalEl = document.getElementById('vetoModal');
+    if (!modalEl) {
+        console.error('Elemen modal pemindahan ruangan tidak ditemukan.');
+        return;
+    }
+
+    document.getElementById('veto_event_id').value = eventId;
+    document.getElementById('veto_reassignment_reason').value = '';
+    const roomSelect = document.getElementById('veto_new_room_id');
+    roomSelect.innerHTML = '<option value="">Memuat daftar ruangan...</option>';
+    roomSelect.disabled = true;
+
+    modalEl.classList.add('is-open');
+    modalEl.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/rooms', {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json' 
+            }
+        });
+        if (!res.ok) {
+            throw new Error(`Gagal memuat daftar ruangan (HTTP ${res.status}).`);
+        }
+
+        const result = await res.json();
+        const rooms = Array.isArray(result)
+            ? result
+            : (Array.isArray(result.data) ? result.data : result.data?.data || []);
+
+        roomSelect.innerHTML = '<option value="">-- Pilih Ruangan Pengganti --</option>';
+        rooms.forEach(room => {
+            const option = document.createElement('option');
+            option.value = room.id;
+            option.textContent = room.room_name || room.name || 'Tanpa Nama';
+            roomSelect.appendChild(option);
+        });
+
+        if (rooms.length === 0) {
+            roomSelect.innerHTML = '<option value="">Belum ada ruangan yang tersedia</option>';
+            return;
+        }
+
+        roomSelect.disabled = false;
+        roomSelect.focus();
+    } catch (err) {
+        console.error('Gagal memuat daftar ruangan pengganti:', err);
+        roomSelect.innerHTML = '<option value="">Gagal memuat ruangan</option>';
+        alert(err.message || 'Gagal memuat daftar ruangan pengganti.');
+    }
+
+};
+
+window.closeVetoModal = function() {
+    const modalEl = document.getElementById('vetoModal');
+    if (!modalEl) return;
+
+    modalEl.classList.remove('is-open');
+    modalEl.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+};
+
+document.getElementById('vetoModal')?.addEventListener('click', event => {
+    if (event.target === event.currentTarget) {
+        window.closeVetoModal();
+    }
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && document.getElementById('vetoModal')?.classList.contains('is-open')) {
+        window.closeVetoModal();
+    }
+});
+
+window.submitVeto = async function() {
+    const eventId = document.getElementById('veto_event_id').value;
+    const newRoomId = document.getElementById('veto_new_room_id').value;
+    const reason = document.getElementById('veto_reassignment_reason').value;
+
+    if (!newRoomId) {
+        alert('Silakan pilih ruangan pengganti terlebih dahulu!');
+        return;
+    }
+    if (!reason || reason.trim().length < 5) {
+        alert('Alasan pemindahan wajib diisi minimal 5 karakter!');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/events/${eventId}/reassign`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                new_room_id: newRoomId,
+                reassignment_reason: reason
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            alert(data.message || 'Ruangan berhasil dipindahkan sepihak!');
+            window.closeVetoModal();
+            
+            // Reload Tabel dan Kalender
+            if (typeof loadEvents === 'function') loadEvents();
+            if (typeof initCalendar === 'function') initCalendar();
+        } else {
+            alert(data.message || 'Gagal memindahkan ruangan.');
+        }
+    } catch (error) {
+        console.error("Error Hak Veto:", error);
+        alert('Terjadi kesalahan koneksi ke server.');
+    }
+};
+        
+        async function rejectEvent(id) {
+            if (!confirm('Tolak agenda ini?')) return;
+            await fetch(`/api/events/${id}/reject`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
+            loadEvents();
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEvents();
+            loadRooms();
+            loadPicUsers();
+            loadComplaints();
+        });
+
+
+
+
+        // KALENDER
+        let allEvents = [];
+
+        async function initCalendar() {
+            try {
+                // Fetch Ruangan untuk Dropdown Filter
+                const roomRes = await fetch('/api/rooms');
+                const roomData = await roomRes.json();
+                const roomSelect = document.getElementById('filterRoom');
+
+                (roomData.data || []).forEach(r => {
+                    roomSelect.innerHTML += `<option value="${r.id}">${r.room_name}</option>`;
+                });
+
+                // Fetch Event Kalender
+                const eventRes = await fetch('/api/calendar');
+                const eventData = await eventRes.json();
+                allEvents = eventData.data || [];
+
+                renderCalendar();
+            } catch (e) {
+                console.error('Gagal memuat kalender:', e);
+            }
+        }
+
+        function renderCalendar() {
+            const selectedRoom = document.getElementById('filterRoom').value;
+            const selectedDate = document.getElementById('filterDate').value;
+            const container = document.getElementById('calendarGrid');
+
+            let filtered = allEvents.filter(item => {
+                let matchRoom = selectedRoom === '' || item.room_id == selectedRoom;
+                let matchDate = selectedDate === '' || item.date === selectedDate;
+                return matchRoom && matchDate;
+            });
+
+            container.innerHTML = '';
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="card" style="grid-column: 1/-1; text-align:center;"><p style="color:var(--text-muted);">Tidak ada agenda terdaftar pada kriteria ini.</p></div>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                container.innerHTML += `
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <span class="badge badge-success">${item.room ? item.room.room_name : 'Ruang ID: ' + item.room_id}</span>
+                    <small style="color:var(--text-muted); font-weight:600;">${item.date}</small>
+                </div>
+                <h4 style="font-size:16px; margin-bottom:8px; color:var(--secondary);">${item.event_name}</h4>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
+                     <b>${item.start_time.substring(0, 5)} - ${item.end_time.substring(0, 5)} WIB</b>
+                </p>
+                <p style="font-size:12px; color:var(--text-main); border-top:1px solid var(--border-color); padding-top:8px;">
+                    Penyelenggara: <b>${item.user ? item.user.fullname : 'Guru/Organisasi'}</b>
+                </p>
+            </div>
+        `;
+            });
+        }
+
+        initCalendar();
+
+        document.getElementById('eventForm')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const payload = {
+                event_name: document.getElementById('event_name').value,
+                room_id: document.getElementById('event_room_id').value,
+                date: document.getElementById('date').value,
+                start_time: document.getElementById('start_time').value,
+                end_time: document.getElementById('end_time').value
+            };
+
+            try {
+                const res = await fetch('/api/events', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    alert('Pengajuan agenda berhasil dikirim');
+                    document.getElementById('eventForm').reset();
+                } else {
+                    alert(result.message || 'Gagal mengajukan agenda ruangan.');
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan jaringan.');
+            }
+        });
+
+        // 3. Submit Handler: Form Pelaporan
+        const photoInput = document.getElementById('photo');
+
+        async function readFileAsDataUrl(file) {
+            const image = await createImageBitmap(file);
+            const maxWidth = 1024;
+            const maxHeight = 768;
+            const scale = Math.min(1, maxWidth / image.width, maxHeight / image.height);
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(image.width * scale));
+            canvas.height = Math.max(1, Math.round(image.height * scale));
+
+            const context = canvas.getContext('2d');
+            if (!context) {
+                image.close();
+                throw new Error('Browser tidak dapat memproses foto.');
+            }
+
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            image.close();
+
+            const compressedPhoto = await new Promise((resolve, reject) => {
+                canvas.toBlob(blob => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error('Gagal mengompres foto.'));
+                    }
+                }, 'image/jpeg', 0.65);
+            });
+
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    if (typeof reader.result === 'string') {
+                        resolve(reader.result);
+                    } else {
+                        reject(new Error('Gagal membaca file foto.'));
+                    }
+                };
+                reader.onerror = () => reject(reader.error || new Error('Gagal membaca file foto.'));
+                reader.readAsDataURL(compressedPhoto);
+            });
+        }
+
+        photoInput?.addEventListener('change', () => {
+            window.capturedPhotoBase64 = null;
+            document.getElementById('input_photo_base64').value = '';
+        });
+
+        document.getElementById('complaintForm')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            if (!token) {
+                alert('Sesi login Anda telah berakhir. Silakan login kembali.');
+                window.location.href = '/';
+                return;
+            }
+
+            const roomId = document.getElementById('complaint_room_id').value;
+            const description = document.getElementById('description').value.trim();
+
+            if (!roomId) {
+                alert('Silakan pilih ruangan terlebih dahulu!');
+                return;
+            }
+            if (description.length < 3) {
+                alert('Deskripsi kerusakan minimal 3 karakter.');
+                return;
+            }
+
+            try {
+                const selectedPhoto = photoInput?.files?.[0];
+                const photoData = selectedPhoto
+                    ? await readFileAsDataUrl(selectedPhoto)
+                    : window.capturedPhotoBase64 || document.getElementById('input_photo_base64')?.value || null;
+
+                const payload = {
+                    room_id: roomId,
+                    description: description,
+                    photo_base64: photoData
+                };
+
+                const res = await fetch('/api/complaints', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const rawText = await res.text();
+                let result;
+
+                try {
+                    result = JSON.parse(rawText);
+                } catch (jsonErr) {
+                    console.error('Server mengembalikan respon HTML/Error PHP:', rawText);
+                    if (rawText.includes('Unable to create temporary file') ||
+                        rawText.includes("POST data can't be buffered")) {
+                        alert('Server PHP tidak dapat menulis file sementara untuk request. Minta administrator mengatur direktori temporary PHP yang dapat ditulis lalu restart Herd.');
+                    } else {
+                        alert('Terjadi kesalahan fatal pada server (HTML/PHP Error). Cek Console F12.');
+                    }
+                    return;
+                }
+
+                if (res.ok) {
+                    alert('Laporan kerusakan berhasil terkirim ke PIC Ruangan!');
+                    document.getElementById('complaintForm').reset();
+                    window.capturedPhotoBase64 = null;
+                    if (photoPreview) photoPreview.style.display = 'none';
+                } else {
+                    console.error('Validation Errors (422):', result.errors);
+                    let errorMsg = result.message || 'Gagal mengirim laporan.';
+                    if (result.errors) {
+                        errorMsg = Object.values(result.errors).flat().join('\n');
+                    }
+                    alert('Gagal Mengirim Laporan:\n' + errorMsg);
+                }
+            } catch (err) {
+                console.error('Network/Server Error:', err);
+                alert('Terjadi kesalahan jaringan atau server.');
+            }
+        });
+
+        // =========================================================
+        // TAMBAHKAN KODE KAMERA DI BAWAH INI (Baris 339 dan seterusnya)
+        // =========================================================
+
+        let cameraStream = null;
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const photoPreview = document.getElementById('photoPreview');
+        const btnStartCamera = document.getElementById('btnStartCamera');
+        const btnCapture = document.getElementById('btnCapture');
+        const btnRetake = document.getElementById('btnRetake');
+
+        // 1. Jalankan/Buka Kamera Real-time
+        btnStartCamera?.addEventListener('click', async () => {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+                video.srcObject = cameraStream;
+                video.style.display = 'block';
+                photoPreview.style.display = 'none';
+                btnStartCamera.style.display = 'none';
+                btnCapture.style.display = 'inline-block';
+                btnRetake.style.display = 'none';
+            } catch (err) {
+                alert('Gagal mengakses kamera: ' + err.message);
+            }
+        });
+
+        // 2. Jepret & Kompres Foto (Menggunakan Synchronous toDataURL)
+        btnCapture?.addEventListener('click', () => {
+            const MAX_WIDTH = 1024;
+            const MAX_HEIGHT = 768;
+            let width = video.videoWidth || 640;
+            let height = video.videoHeight || 480;
+
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+            canvas.width = width;
+            canvas.height = height;
+        })
+
+        btnCapture?.addEventListener('click', () => {
+            // 1. Deklarasikan ukuran video dan canvas (Wajib ada agar tidak error width/height)
+            const MAX_WIDTH = 1024;
+            const MAX_HEIGHT = 768;
+            let width = video.videoWidth || 640;
+            let height = video.videoHeight || 480;
+
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, width, height);
+
+            // 2. Simpan string Base64 ke variabel global dan ke input hidden
+            window.capturedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.5);
+
+            const inputPhoto = document.getElementById('input_photo_base64');
+            if (inputPhoto) {
+                inputPhoto.value = window.capturedPhotoBase64;
+            }
+
+            // 3. Hentikan alur kamera dan perbarui UI
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+            video.style.display = 'none';
+            photoPreview.src = window.capturedPhotoBase64;
+            photoPreview.style.display = 'block';
+            btnCapture.style.display = 'none';
+            btnRetake.style.display = 'inline-block';
+        });
+
+    </script>
+</body>
+
+</html>
