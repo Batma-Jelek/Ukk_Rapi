@@ -26,6 +26,7 @@
         /* Sidebar Styling */
         .sidebar {
             width: 260px;
+            flex: 0 0 260px;
             background-color: #0f172a;
             color: #ffffff;
             padding: 24px 16px;
@@ -74,6 +75,12 @@
             cursor: pointer;
         }
 
+        .nav-link svg {
+            width: 24px;
+            height: 24px;
+            flex: 0 0 24px;
+        }
+
         .nav-link:hover,
         .nav-link.active {
             background-color: #0284c7;
@@ -108,6 +115,7 @@
         /* Main Content Styling */
         .main-content {
             flex: 1;
+            min-width: 0;
             padding: 32px;
             overflow-y: auto;
         }

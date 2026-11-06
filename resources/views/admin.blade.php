@@ -25,6 +25,7 @@
 
         .sidebar {
             width: 260px;
+            flex: 0 0 260px;
             background-color: #0f172a;
             color: #ffffff;
             padding: 24px 16px;
@@ -73,6 +74,12 @@
             cursor: pointer;
         }
 
+        .nav-link svg {
+            width: 24px;
+            height: 24px;
+            flex: 0 0 24px;
+        }
+
         .nav-link:hover,
         .nav-link.active {
             background-color: #0284c7;
@@ -106,6 +113,7 @@
 
         .main-content {
             flex: 1;
+            min-width: 0;
             padding: 32px;
             overflow-y: auto;
         }
@@ -649,17 +657,16 @@
 
     <div class="dashboard-container">
         <header class="mobile-nav-bar">
-            <button type="button" class="mobile-menu-toggle" onclick="openMobileNav()"
-                aria-label="Buka menu" aria-controls="mobileSidebar" aria-expanded="false">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" aria-hidden="true">
+            <button type="button" class="mobile-menu-toggle" onclick="openMobileNav()" aria-label="Buka menu"
+                aria-controls="mobileSidebar" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    aria-hidden="true">
                     <path d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
             <strong>RAPI-Web</strong>
         </header>
-        <button type="button" class="mobile-nav-backdrop" onclick="closeMobileNav()"
-            aria-label="Tutup menu"></button>
+        <button type="button" class="mobile-nav-backdrop" onclick="closeMobileNav()" aria-label="Tutup menu"></button>
         <aside class="sidebar" id="mobileSidebar">
             <div>
                 <div class="sidebar-header">
@@ -821,11 +828,13 @@
                                     <th>Deskripsi Kerusakan</th>
                                     <th>Pelapor</th>
                                     <th>Status Perbaikan</th>
+                                    <th>Aksi</th> <!-- KOLOM BARU -->
                                 </tr>
                             </thead>
                             <tbody id="complaintsTableBody">
                                 <tr>
-                                    <td colspan="4" style="text-align: center; color: #64748b; padding: 16px;">Memuat
+                                    <!-- UBAH COLSPAN MENJADI 5 -->
+                                    <td colspan="5" style="text-align: center; color: #64748b; padding: 16px;">Memuat
                                         laporan perbaikan...</td>
                                 </tr>
                             </tbody>
@@ -936,31 +945,31 @@
     <div class="veto-modal" id="vetoModal" aria-hidden="true">
         <div class="veto-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="vetoModalTitle">
             <div class="veto-modal-header">
-                    <h2 id="vetoModalTitle">Pindah Ruang Agenda</h2>
-                    <button type="button" class="veto-modal-close" onclick="closeVetoModal()"
-                        aria-label="Tutup">&times;</button>
-                </div>
-                <div class="veto-modal-body">
-                    <input type="hidden" id="veto_event_id">
+                <h2 id="vetoModalTitle">Pindah Ruang Agenda</h2>
+                <button type="button" class="veto-modal-close" onclick="closeVetoModal()"
+                    aria-label="Tutup">&times;</button>
+            </div>
+            <div class="veto-modal-body">
+                <input type="hidden" id="veto_event_id">
 
-                    <div class="form-group">
-                        <label for="veto_new_room_id">Pilih Ruangan Baru</label>
-                        <select id="veto_new_room_id" required>
-                            <option value="">-- Pilih Ruangan Pengganti --</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label for="veto_new_room_id">Pilih Ruangan Baru</label>
+                    <select id="veto_new_room_id" required>
+                        <option value="">-- Pilih Ruangan Pengganti --</option>
+                    </select>
+                </div>
 
-                    <div class="form-group">
-                        <label for="veto_reassignment_reason">Alasan Pemindahan (Wajib)</label>
-                        <textarea id="veto_reassignment_reason" rows="3"
-                            placeholder="Jelaskan alasan pemindahan (misal: Ruangan dipakai untuk Acara Utama Sekolah)..."
-                            required></textarea>
-                    </div>
+                <div class="form-group">
+                    <label for="veto_reassignment_reason">Alasan Pemindahan (Wajib)</label>
+                    <textarea id="veto_reassignment_reason" rows="3"
+                        placeholder="Jelaskan alasan pemindahan (misal: Ruangan dipakai untuk Acara Utama Sekolah)..."
+                        required></textarea>
                 </div>
-                <div class="veto-modal-footer">
-                    <button type="button" class="btn-secondary" onclick="closeVetoModal()">Batal</button>
-                    <button type="button" onclick="submitVeto()" class="btn-veto-submit">Eksekusi Veto</button>
-                </div>
+            </div>
+            <div class="veto-modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeVetoModal()">Batal</button>
+                <button type="button" onclick="submitVeto()" class="btn-veto-submit">Eksekusi Veto</button>
+            </div>
         </div>
     </div>
 
@@ -1196,16 +1205,50 @@
 
                 let rows = '';
                 complaints.forEach(c => {
-                    let badge = c.status_repair === 'Sudah Diperbaiki' ? '<span class="badge badge-success">Selesai Diperbaiki</span>' : `<span class="badge badge-warning">${c.status_repair}</span>`;
+                    // 1. Badge Status Perbaikan
+                    let badge = c.status_repair === 'Sudah Diperbaiki'
+                        ? '<span class="badge badge-success" style="background:#28a745; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Selesai Diperbaiki</span>'
+                        : '<span class="badge badge-danger" style="background:#dc3545; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Belum Diperbaiki</span>';
+
+                    // 2. Logika Tombol WhatsApp Alert PIC
+                    let actionBtn = '-';
+
+                    if (c.status_repair !== 'Sudah Diperbaiki') {
+                        let roomName = c.room ? (c.room.room_name || c.room.name) : 'Ruangan';
+                        let picName = (c.room && c.room.pic) ? (c.room.pic.fullname || c.room.pic.name) : 'PIC Lab';
+
+                        // Ambil nomor HP PIC
+                        let phone = (c.room && c.room.pic) ? (c.room.pic.phone || c.room.pic.no_wa || c.room.pic.nomor_hp) : null;
+
+                        if (phone) {
+                            let waNumber = phone.replace(/[^0-9]/g, '');
+                            if (waNumber.startsWith('0')) {
+                                waNumber = '62' + waNumber.substring(1);
+                            }
+
+                            let textMsg = encodeURIComponent(`Halo ${picName} (PIC ${roomName}), ini peringatan dari Admin. Laporan kerusakan: *"${c.description}"* di ${roomName} terpantau belum ditangani. Mohon segera dicek dan diperbaiki. Terima kasih.`);
+
+                            actionBtn = `
+                    <a href="https://wa.me/${waNumber}?text=${textMsg}" target="_blank" style="background-color: #25D366; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center;">
+                        Alert PIC
+                    </a>`;
+                        } else {
+                            actionBtn = '<span style="font-size: 11px; color: #94a3b8; font-style: italic;">No HP Kosong</span>';
+                        }
+                    }
+
                     rows += `
-                <tr>
-                    <td><strong>${c.room ? c.room.room_name : '-'}</strong></td>
-                    <td>${c.description}</td>
-                    <td>${c.user ? (c.user.fullname || c.user.name) : 'Guru'}</td>
-                    <td>${badge}</td>
-                </tr>
+            <tr>
+                <td><strong>${c.room ? (c.room.room_name || c.room.name) : '-'}</strong></td>
+                <td>${c.description || '-'}</td>
+                <td>${c.user ? (c.user.fullname || c.user.name) : 'Guru'}</td>
+                <td>${badge}</td>
+                <td>${actionBtn}</td>
+            </tr>
             `;
                 });
+
+                tableBody.innerHTML = rows || `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 16px;">Belum ada laporan kerusakan.</td></tr>`;
                 tableBody.innerHTML = rows || `<tr><td colspan="4" style="text-align: center; padding: 16px;">Belum ada laporan kerusakan.</td></tr>`;
             } catch (e) {
                 console.error(e);
@@ -1264,135 +1307,135 @@
             loadEvents();
         }
 
-// ====================================================
-// HAK VETO: FUNGSI DIPASANG KE WINDOW AGAR DIBACA ONCLICK
-// ====================================================
+        // ====================================================
+        // HAK VETO: FUNGSI DIPASANG KE WINDOW AGAR DIBACA ONCLICK
+        // ====================================================
 
-window.openVetoModal = async function(eventId) {
-    const modalEl = document.getElementById('vetoModal');
-    if (!modalEl) {
-        console.error('Elemen modal pemindahan ruangan tidak ditemukan.');
-        return;
-    }
+        window.openVetoModal = async function (eventId) {
+            const modalEl = document.getElementById('vetoModal');
+            if (!modalEl) {
+                console.error('Elemen modal pemindahan ruangan tidak ditemukan.');
+                return;
+            }
 
-    document.getElementById('veto_event_id').value = eventId;
-    document.getElementById('veto_reassignment_reason').value = '';
-    const roomSelect = document.getElementById('veto_new_room_id');
-    roomSelect.innerHTML = '<option value="">Memuat daftar ruangan...</option>';
-    roomSelect.disabled = true;
+            document.getElementById('veto_event_id').value = eventId;
+            document.getElementById('veto_reassignment_reason').value = '';
+            const roomSelect = document.getElementById('veto_new_room_id');
+            roomSelect.innerHTML = '<option value="">Memuat daftar ruangan...</option>';
+            roomSelect.disabled = true;
 
-    modalEl.classList.add('is-open');
-    modalEl.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
+            modalEl.classList.add('is-open');
+            modalEl.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
 
-    try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/rooms', {
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json' 
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/rooms', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!res.ok) {
+                    throw new Error(`Gagal memuat daftar ruangan (HTTP ${res.status}).`);
+                }
+
+                const result = await res.json();
+                const rooms = Array.isArray(result)
+                    ? result
+                    : (Array.isArray(result.data) ? result.data : result.data?.data || []);
+
+                roomSelect.innerHTML = '<option value="">-- Pilih Ruangan Pengganti --</option>';
+                rooms.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room.id;
+                    option.textContent = room.room_name || room.name || 'Tanpa Nama';
+                    roomSelect.appendChild(option);
+                });
+
+                if (rooms.length === 0) {
+                    roomSelect.innerHTML = '<option value="">Belum ada ruangan yang tersedia</option>';
+                    return;
+                }
+
+                roomSelect.disabled = false;
+                roomSelect.focus();
+            } catch (err) {
+                console.error('Gagal memuat daftar ruangan pengganti:', err);
+                roomSelect.innerHTML = '<option value="">Gagal memuat ruangan</option>';
+                alert(err.message || 'Gagal memuat daftar ruangan pengganti.');
+            }
+
+        };
+
+        window.closeVetoModal = function () {
+            const modalEl = document.getElementById('vetoModal');
+            if (!modalEl) return;
+
+            modalEl.classList.remove('is-open');
+            modalEl.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        };
+
+        document.getElementById('vetoModal')?.addEventListener('click', event => {
+            if (event.target === event.currentTarget) {
+                window.closeVetoModal();
             }
         });
-        if (!res.ok) {
-            throw new Error(`Gagal memuat daftar ruangan (HTTP ${res.status}).`);
-        }
 
-        const result = await res.json();
-        const rooms = Array.isArray(result)
-            ? result
-            : (Array.isArray(result.data) ? result.data : result.data?.data || []);
-
-        roomSelect.innerHTML = '<option value="">-- Pilih Ruangan Pengganti --</option>';
-        rooms.forEach(room => {
-            const option = document.createElement('option');
-            option.value = room.id;
-            option.textContent = room.room_name || room.name || 'Tanpa Nama';
-            roomSelect.appendChild(option);
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && document.getElementById('vetoModal')?.classList.contains('is-open')) {
+                window.closeVetoModal();
+            }
         });
 
-        if (rooms.length === 0) {
-            roomSelect.innerHTML = '<option value="">Belum ada ruangan yang tersedia</option>';
-            return;
-        }
+        window.submitVeto = async function () {
+            const eventId = document.getElementById('veto_event_id').value;
+            const newRoomId = document.getElementById('veto_new_room_id').value;
+            const reason = document.getElementById('veto_reassignment_reason').value;
 
-        roomSelect.disabled = false;
-        roomSelect.focus();
-    } catch (err) {
-        console.error('Gagal memuat daftar ruangan pengganti:', err);
-        roomSelect.innerHTML = '<option value="">Gagal memuat ruangan</option>';
-        alert(err.message || 'Gagal memuat daftar ruangan pengganti.');
-    }
+            if (!newRoomId) {
+                alert('Silakan pilih ruangan pengganti terlebih dahulu!');
+                return;
+            }
+            if (!reason || reason.trim().length < 5) {
+                alert('Alasan pemindahan wajib diisi minimal 5 karakter!');
+                return;
+            }
 
-};
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/events/${eventId}/reassign`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        new_room_id: newRoomId,
+                        reassignment_reason: reason
+                    })
+                });
 
-window.closeVetoModal = function() {
-    const modalEl = document.getElementById('vetoModal');
-    if (!modalEl) return;
+                const data = await response.json();
 
-    modalEl.classList.remove('is-open');
-    modalEl.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
-};
+                if (response.ok && data.success) {
+                    alert(data.message || 'Ruangan berhasil dipindahkan sepihak!');
+                    window.closeVetoModal();
 
-document.getElementById('vetoModal')?.addEventListener('click', event => {
-    if (event.target === event.currentTarget) {
-        window.closeVetoModal();
-    }
-});
+                    // Reload Tabel dan Kalender
+                    if (typeof loadEvents === 'function') loadEvents();
+                    if (typeof initCalendar === 'function') initCalendar();
+                } else {
+                    alert(data.message || 'Gagal memindahkan ruangan.');
+                }
+            } catch (error) {
+                console.error("Error Hak Veto:", error);
+                alert('Terjadi kesalahan koneksi ke server.');
+            }
+        };
 
-document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && document.getElementById('vetoModal')?.classList.contains('is-open')) {
-        window.closeVetoModal();
-    }
-});
-
-window.submitVeto = async function() {
-    const eventId = document.getElementById('veto_event_id').value;
-    const newRoomId = document.getElementById('veto_new_room_id').value;
-    const reason = document.getElementById('veto_reassignment_reason').value;
-
-    if (!newRoomId) {
-        alert('Silakan pilih ruangan pengganti terlebih dahulu!');
-        return;
-    }
-    if (!reason || reason.trim().length < 5) {
-        alert('Alasan pemindahan wajib diisi minimal 5 karakter!');
-        return;
-    }
-
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/events/${eventId}/reassign`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                new_room_id: newRoomId,
-                reassignment_reason: reason
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            alert(data.message || 'Ruangan berhasil dipindahkan sepihak!');
-            window.closeVetoModal();
-            
-            // Reload Tabel dan Kalender
-            if (typeof loadEvents === 'function') loadEvents();
-            if (typeof initCalendar === 'function') initCalendar();
-        } else {
-            alert(data.message || 'Gagal memindahkan ruangan.');
-        }
-    } catch (error) {
-        console.error("Error Hak Veto:", error);
-        alert('Terjadi kesalahan koneksi ke server.');
-    }
-};
-        
         async function rejectEvent(id) {
             if (!confirm('Tolak agenda ini?')) return;
             await fetch(`/api/events/${id}/reject`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
