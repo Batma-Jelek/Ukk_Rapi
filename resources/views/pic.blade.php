@@ -90,16 +90,28 @@
         }
 
         async function updateRepairStatus(id, status_repair) {
-            const res = await fetch(`/api/complaints/${id}/status`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
-                body: JSON.stringify({ status_repair })
-            });
-            if (res.ok) alert('Status perbaikan berhasil diperbarui!');
+            try {
+                const res = await fetch(`/api/complaints/${id}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ status_repair })
+                });
+                const result = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(result.message || 'Gagal memperbarui status perbaikan.');
+                }
+
+                await loadComplaints();
+                alert('Status perbaikan berhasil diperbarui!');
+            } catch (error) {
+                alert(error.message || 'Gagal memperbarui status perbaikan. Periksa koneksi lalu coba lagi.');
+                await loadComplaints();
+            }
         }
 
         function logout() {

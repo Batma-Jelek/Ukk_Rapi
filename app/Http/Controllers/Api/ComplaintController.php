@@ -33,8 +33,8 @@ class ComplaintController extends Controller
             }
 
             if ($user->role_id === 1) {
-                // Admin/Waka: Ambil semua laporan beserta relasi room, reporter, dan user
-                $complaints = Complaint::with(['room', 'reporter', 'user'])->latest()->get();
+                // Admin/Waka also needs the PIC contact for WhatsApp alerts.
+                $complaints = Complaint::with(['room.pic', 'reporter', 'user'])->latest()->get();
             } else if ($user->role_id === 2) {
                 // PIC Ruangan: Ambil laporan pada ruangan yang dipegang PIC
                 $complaints = Complaint::whereHas('room', function ($query) use ($user) {
@@ -158,7 +158,7 @@ class ComplaintController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'status_repair' => 'required|string',
+            'status_repair' => 'required|string|in:Belum Diperbaiki,Menunggu Spare Part,Sudah Diperbaiki',
         ]);
 
         if ($validator->fails()) {
@@ -168,10 +168,20 @@ class ComplaintController extends Controller
             ], 422);
         }
 
-        $complaint = Complaint::findOrFail($id);
+        $user = $request->user();
+        $complaint = Complaint::with('room')->findOrFail($id);
+
+        if (!in_array($user->role_id, [1, 2], true)) {
+            abort(403);
+        }
+
+        if ($user->role_id === 2 && $complaint->room->pic_id !== $user->id) {
+            abort(403);
+        }
+
         $complaint->update([
             'status_repair' => $request->status_repair,
-            'handler_id' => $request->user()->id,
+            'handler_id' => $user->id,
         ]);
 
         return response()->json([

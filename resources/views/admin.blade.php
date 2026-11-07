@@ -1027,6 +1027,10 @@
                 loadPicUsers();
                 loadRooms();
             }
+
+            if (tabId === 'perbaikanTab') {
+                loadComplaints();
+            }
         }
 
         // 1. Load Data Agenda (Toleran Case-Sensitivity)
@@ -1198,6 +1202,10 @@
                 const response = await fetch('/api/complaints', {
                     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
                 });
+                if (!response.ok) {
+                    throw new Error(`HTTP Error Status: ${response.status}`);
+                }
+
                 const result = await response.json();
                 const complaints = Array.isArray(result) ? result : (result.data || []);
                 // console.log('Loaded complaints:', complaints);
@@ -1205,31 +1213,38 @@
 
                 let rows = '';
                 complaints.forEach(c => {
-                    // 1. Badge Status Perbaikan
-                    let badge = c.status_repair === 'Sudah Diperbaiki'
-                        ? '<span class="badge badge-success" style="background:#28a745; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Selesai Diperbaiki</span>'
-                        : '<span class="badge badge-danger" style="background:#dc3545; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Belum Diperbaiki</span>';
+                    const repairStatus = c.status_repair || 'Belum Diperbaiki';
+                    const statusBadgeSettings = {
+                        'Belum Diperbaiki': { label: 'Belum Diperbaiki', color: '#dc3545' },
+                        'Menunggu Spare Part': { label: 'Menunggu Spare Part', color: '#f59e0b' },
+                        'Sudah Diperbaiki': { label: 'Sudah Diperbaiki', color: '#28a745' }
+                    };
+                    const statusBadge = statusBadgeSettings[repairStatus] || { label: 'Status tidak diketahui', color: '#64748b' };
+                    const badge = `<span class="badge" style="background:${statusBadge.color}; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">${statusBadge.label}</span>`;
 
                     // 2. Logika Tombol WhatsApp Alert PIC
                     let actionBtn = '-';
 
-                    if (c.status_repair !== 'Sudah Diperbaiki') {
+                    if (repairStatus !== 'Sudah Diperbaiki') {
                         let roomName = c.room ? (c.room.room_name || c.room.name) : 'Ruangan';
                         let picName = (c.room && c.room.pic) ? (c.room.pic.fullname || c.room.pic.name) : 'PIC Lab';
 
                         // Ambil nomor HP PIC
-                        let phone = (c.room && c.room.pic) ? (c.room.pic.phone || c.room.pic.no_wa || c.room.pic.nomor_hp) : null;
+                        let phone = (c.room && c.room.pic)
+                            ? (c.room.pic.phone_number || c.room.pic.phone || c.room.pic.no_wa || c.room.pic.nomor_hp)
+                            : null;
+                        let waNumber = phone ? phone.replace(/[^0-9]/g, '') : '';
+                        if (waNumber.startsWith('0')) {
+                            waNumber = '62' + waNumber.substring(1);
+                        } else if (waNumber.startsWith('8')) {
+                            waNumber = '62' + waNumber;
+                        }
 
-                        if (phone) {
-                            let waNumber = phone.replace(/[^0-9]/g, '');
-                            if (waNumber.startsWith('0')) {
-                                waNumber = '62' + waNumber.substring(1);
-                            }
-
+                        if (waNumber) {
                             let textMsg = encodeURIComponent(`Halo ${picName} (PIC ${roomName}), ini peringatan dari Admin. Laporan kerusakan: *"${c.description}"* di ${roomName} terpantau belum ditangani. Mohon segera dicek dan diperbaiki. Terima kasih.`);
 
                             actionBtn = `
-                    <a href="https://wa.me/${waNumber}?text=${textMsg}" target="_blank" style="background-color: #25D366; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center;">
+                    <a href="https://wa.me/${waNumber}?text=${textMsg}" target="_blank" rel="noopener noreferrer" style="background-color: #25D366; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center;">
                         Alert PIC
                     </a>`;
                         } else {
@@ -1249,9 +1264,9 @@
                 });
 
                 tableBody.innerHTML = rows || `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 16px;">Belum ada laporan kerusakan.</td></tr>`;
-                tableBody.innerHTML = rows || `<tr><td colspan="4" style="text-align: center; padding: 16px;">Belum ada laporan kerusakan.</td></tr>`;
             } catch (e) {
                 console.error(e);
+                document.getElementById('complaintsTableBody').innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444; padding: 16px;">Gagal memuat status perbaikan. Silakan coba lagi.</td></tr>`;
             }
         }
 
@@ -1452,6 +1467,12 @@
             loadRooms();
             loadPicUsers();
             loadComplaints();
+
+            window.setInterval(() => {
+                if (!document.hidden) {
+                    loadComplaints();
+                }
+            }, 10000);
         });
 
 
