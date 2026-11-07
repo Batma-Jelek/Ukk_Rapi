@@ -670,7 +670,7 @@
         <aside class="sidebar" id="mobileSidebar">
             <div>
                 <div class="sidebar-header">
-                    <h2>RAPI-Web</h2>
+                    <h2>RAPI</h2>
                     <small>Panel Waka / Admin</small>
                     <button type="button" class="mobile-nav-close" onclick="closeMobileNav()"
                         aria-label="Tutup menu">&times;</button>
@@ -720,6 +720,18 @@
                             <path d="M12 3 2.8 19h18.4L12 3zM12 9v4M12 16h.01"></path>
                         </svg>Laporan Kerusakan
                     </a>
+
+                    <!-- Menu Baru: Manajemen Akun -->
+                    <a class="nav-link" onclick="showTab('akunTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>Manajemen Akun
+                    </a>
+
                 </nav>
             </div>
             <div class="sidebar-footer">
@@ -935,6 +947,77 @@
                     </form>
                 </div>
             </div>
+
+            <!-- TAB BARU: MANAJEMEN AKUN -->
+            <div id="akunTab" class="section-tab" style="display: none;">
+                <header class="content-header">
+                    <h1>Manajemen Akun Pengguna</h1>
+                </header>
+
+                <!-- 1. Form Tambah Akun Manual -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <h3>Tambah Akun Manual</h3>
+                    <form id="addAccountForm">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                            <div class="form-group">
+                                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Nama
+                                    Lengkap</label>
+                                <input type="text" id="acc_name" class="form-control"
+                                    placeholder="Contoh: Ahmad Subagja" required>
+                            </div>
+                            <div class="form-group">
+                                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Username</label>
+                                <input type="text" id="acc_username" class="form-control" placeholder="Contoh: ahmad123"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Password</label>
+                                <input type="password" id="acc_password" class="form-control" placeholder="******"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Role / Hak
+                                    Akses</label>
+                                <select id="acc_role" class="form-control" required>
+                                    <option value="">-- Pilih Role --</option>
+                                    <option value="2">PIC Lab</option>
+                                    <option value="3">Guru</option>
+                                    <option value="4">Organisasi Sekolah</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label style="display: block; font-weight: 600; margin-bottom: 6px;">No HP / WhatsApp
+                                    (Opsional)</label>
+                                <input type="text" id="acc_phone" class="form-control"
+                                    placeholder="Contoh: 08123456789">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding: 10px 20px; font-weight: 600;">Tambah
+                            Akun</button>
+                    </form>
+                </div>
+
+                <!-- 2. Form Import Excel -->
+                <div class="card">
+                    <h3>Import Akun via File Excel</h3>
+                    <p style="color: #64748b; font-size: 13px; margin-bottom: 16px;">
+                        Unggah file .xlsx atau .csv. Baris pertama (header) harus berisi: <strong>fullname, username,
+                            password, role_id, phone</strong>.
+                    </p>
+                    <form id="importAccountForm">
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <input type="file" id="acc_excel" accept=".xlsx, .xls, .csv" class="form-control"
+                                style="max-width: 400px;" required>
+                        </div>
+                        <button type="submit"
+                            style="background-color: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                            Upload & Import
+                        </button>
+                    </form>
+                </div>
+            </div>
+
     </div>
     </div>
 
@@ -1026,10 +1109,6 @@
             if (tabId === 'ruanganTab') {
                 loadPicUsers();
                 loadRooms();
-            }
-
-            if (tabId === 'perbaikanTab') {
-                loadComplaints();
             }
         }
 
@@ -1202,10 +1281,6 @@
                 const response = await fetch('/api/complaints', {
                     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
                 });
-                if (!response.ok) {
-                    throw new Error(`HTTP Error Status: ${response.status}`);
-                }
-
                 const result = await response.json();
                 const complaints = Array.isArray(result) ? result : (result.data || []);
                 // console.log('Loaded complaints:', complaints);
@@ -1213,38 +1288,31 @@
 
                 let rows = '';
                 complaints.forEach(c => {
-                    const repairStatus = c.status_repair || 'Belum Diperbaiki';
-                    const statusBadgeSettings = {
-                        'Belum Diperbaiki': { label: 'Belum Diperbaiki', color: '#dc3545' },
-                        'Menunggu Spare Part': { label: 'Menunggu Spare Part', color: '#f59e0b' },
-                        'Sudah Diperbaiki': { label: 'Sudah Diperbaiki', color: '#28a745' }
-                    };
-                    const statusBadge = statusBadgeSettings[repairStatus] || { label: 'Status tidak diketahui', color: '#64748b' };
-                    const badge = `<span class="badge" style="background:${statusBadge.color}; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">${statusBadge.label}</span>`;
+                    // 1. Badge Status Perbaikan
+                    let badge = c.status_repair === 'Sudah Diperbaiki'
+                        ? '<span class="badge badge-success" style="background:#28a745; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Selesai Diperbaiki</span>'
+                        : '<span class="badge badge-danger" style="background:#dc3545; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Belum Diperbaiki</span>';
 
                     // 2. Logika Tombol WhatsApp Alert PIC
                     let actionBtn = '-';
 
-                    if (repairStatus !== 'Sudah Diperbaiki') {
+                    if (c.status_repair !== 'Sudah Diperbaiki') {
                         let roomName = c.room ? (c.room.room_name || c.room.name) : 'Ruangan';
                         let picName = (c.room && c.room.pic) ? (c.room.pic.fullname || c.room.pic.name) : 'PIC Lab';
 
                         // Ambil nomor HP PIC
-                        let phone = (c.room && c.room.pic)
-                            ? (c.room.pic.phone_number || c.room.pic.phone || c.room.pic.no_wa || c.room.pic.nomor_hp)
-                            : null;
-                        let waNumber = phone ? phone.replace(/[^0-9]/g, '') : '';
-                        if (waNumber.startsWith('0')) {
-                            waNumber = '62' + waNumber.substring(1);
-                        } else if (waNumber.startsWith('8')) {
-                            waNumber = '62' + waNumber;
-                        }
+                        let phone = (c.room && c.room.pic) ? (c.room.pic.phone || c.room.pic.no_wa || c.room.pic.nomor_hp) : null;
 
-                        if (waNumber) {
+                        if (phone) {
+                            let waNumber = phone.replace(/[^0-9]/g, '');
+                            if (waNumber.startsWith('0')) {
+                                waNumber = '62' + waNumber.substring(1);
+                            }
+
                             let textMsg = encodeURIComponent(`Halo ${picName} (PIC ${roomName}), ini peringatan dari Admin. Laporan kerusakan: *"${c.description}"* di ${roomName} terpantau belum ditangani. Mohon segera dicek dan diperbaiki. Terima kasih.`);
 
                             actionBtn = `
-                    <a href="https://wa.me/${waNumber}?text=${textMsg}" target="_blank" rel="noopener noreferrer" style="background-color: #25D366; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center;">
+                    <a href="https://wa.me/${waNumber}?text=${textMsg}" target="_blank" style="background-color: #25D366; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center;">
                         Alert PIC
                     </a>`;
                         } else {
@@ -1264,9 +1332,9 @@
                 });
 
                 tableBody.innerHTML = rows || `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 16px;">Belum ada laporan kerusakan.</td></tr>`;
+                tableBody.innerHTML = rows || `<tr><td colspan="4" style="text-align: center; padding: 16px;">Belum ada laporan kerusakan.</td></tr>`;
             } catch (e) {
                 console.error(e);
-                document.getElementById('complaintsTableBody').innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444; padding: 16px;">Gagal memuat status perbaikan. Silakan coba lagi.</td></tr>`;
             }
         }
 
@@ -1467,12 +1535,6 @@
             loadRooms();
             loadPicUsers();
             loadComplaints();
-
-            window.setInterval(() => {
-                if (!document.hidden) {
-                    loadComplaints();
-                }
-            }, 10000);
         });
 
 
