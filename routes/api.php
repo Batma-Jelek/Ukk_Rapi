@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\ComplaintController;
+use App\Http\Controllers\Api\AccountsImportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Auth Routes
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/users/import', AccountsImportController::class);
 
     // Route Mengambil Daftar User (Dipakai untuk Dropdown PIC Ruangan - Role ID 2)
     Route::get('/users', function (\Illuminate\Http\Request $request) {

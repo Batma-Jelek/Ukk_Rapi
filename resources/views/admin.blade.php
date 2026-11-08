@@ -949,7 +949,7 @@
             </div>
 
             <!-- TAB BARU: MANAJEMEN AKUN -->
-            <div id="akunTab" class="section-tab" style="display: none;">
+            <div id="akunTab" class="section-tab">
                 <header class="content-header">
                     <h1>Manajemen Akun Pengguna</h1>
                 </header>
@@ -1389,6 +1389,87 @@
             await fetch(`/api/events/${id}/approve`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
             loadEvents();
         }
+
+        // Submit Form Tambah Akun Manual
+        document.getElementById('addAccountForm')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+
+            const payload = {
+                fullname: document.getElementById('acc_name').value, // atau name (sesuaikan kolom DB)
+                username: document.getElementById('acc_username').value,
+                password: document.getElementById('acc_password').value,
+                role_id: document.getElementById('acc_role').value,
+                phone: document.getElementById('acc_phone').value // atau no_wa
+            };
+
+            try {
+                const res = await fetch('/api/users/manual', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await res.json();
+                if (res.ok) {
+                    alert('Akun berhasil dibuat!');
+                    this.reset();
+                } else {
+                    alert('Gagal membuat akun: ' + (result.message || 'Cek kembali data Anda.'));
+                }
+            } catch (err) {
+                console.error('Error Add Account:', err);
+                alert('Terjadi kesalahan jaringan.');
+            }
+        });
+
+        // Submit Form Import Excel
+        document.getElementById('importAccountForm')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('acc_excel');
+            if (!fileInput.files[0]) return alert('Pilih file Excel terlebih dahulu!');
+
+            const token = localStorage.getItem('token');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                // Tampilkan indikator loading (opsional)
+                const btnSubmit = this.querySelector('button[type="submit"]');
+                btnSubmit.innerText = 'Mengunggah...';
+                btnSubmit.disabled = true;
+
+                const res = await fetch('/api/users/import', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                        // CATATAN PENTING: Jangan set Content-Type. 
+                        // Browser akan otomatis mengatur multipart/form-data dan boundary-nya untuk file.
+                    },
+                    body: formData
+                });
+
+                const result = await res.json();
+                if (res.ok) {
+                    alert(`Import berhasil! ${result.imported_count} akun ditambahkan.`);
+                    this.reset();
+                } else {
+                    alert('Gagal import: ' + (result.message || 'Format file salah.'));
+                }
+            } catch (err) {
+                console.error('Error Import Account:', err);
+                alert('Terjadi kesalahan jaringan saat mengunggah file.');
+            } finally {
+                const btnSubmit = this.querySelector('button[type="submit"]');
+                btnSubmit.innerText = 'Upload & Import';
+                btnSubmit.disabled = false;
+            }
+        });
 
         // ====================================================
         // HAK VETO: FUNGSI DIPASANG KE WINDOW AGAR DIBACA ONCLICK
