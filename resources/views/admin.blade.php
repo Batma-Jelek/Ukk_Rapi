@@ -981,7 +981,7 @@
                                     Akses</label>
                                 <select id="acc_role" class="form-control" required>
                                     <option value="">-- Pilih Role --</option>
-                                    <option value="2">PIC Lab</option>
+                                    <option value="2">PIC Ruang</option>
                                     <option value="3">Guru</option>
                                     <option value="4">Organisasi Sekolah</option>
                                 </select>
@@ -1301,7 +1301,7 @@
                         let picName = (c.room && c.room.pic) ? (c.room.pic.fullname || c.room.pic.name) : 'PIC Lab';
 
                         // Ambil nomor HP PIC
-                        let phone = (c.room && c.room.pic) ? (c.room.pic.phone || c.room.pic.no_wa || c.room.pic.nomor_hp) : null;
+                        let phone = (c.room && c.room.pic) ? (c.room.pic.phone_number) : null;
 
                         if (phone) {
                             let waNumber = phone.replace(/[^0-9]/g, '');
@@ -1400,7 +1400,7 @@
                 username: document.getElementById('acc_username').value,
                 password: document.getElementById('acc_password').value,
                 role_id: document.getElementById('acc_role').value,
-                phone: document.getElementById('acc_phone').value // atau no_wa
+                phone_number: document.getElementById('acc_phone').value // atau no_wa
             };
 
             try {

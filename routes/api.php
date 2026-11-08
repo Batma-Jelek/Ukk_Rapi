@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\RoomController;
@@ -62,4 +63,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin (Role 1): Generator Teguran WA ke PIC
     Route::get('/complaints/{id}/wa-link', [ComplaintController::class, 'getWaLink']);
+
+    Route::post('/users/manual', [UserController::class, 'store']);
 });
