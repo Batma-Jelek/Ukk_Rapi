@@ -76,12 +76,16 @@
             <p style="font-size:14px; margin-bottom:16px;"><b>Deskripsi Kerusakan:</b><br>${item.description}</p>
             
             <div class="form-group">
-                <label>Update Status Perbaikan:</label>
-                <select onchange="updateRepairStatus(${item.id}, this.value)" class="form-control">
+                <label for="repairStatus_${item.id}">Update Status Perbaikan:</label>
+                <select id="repairStatus_${item.id}" class="form-control">
                     <option value="Belum Diperbaiki" ${item.status_repair === 'Belum Diperbaiki' ? 'selected' : ''}>Belum Diperbaiki</option>
                     <option value="Menunggu Spare Part" ${item.status_repair === 'Menunggu Spare Part' ? 'selected' : ''}>Menunggu Spare Part</option>
                     <option value="Sudah Diperbaiki" ${item.status_repair === 'Sudah Diperbaiki' ? 'selected' : ''}>Sudah Diperbaiki</option>
                 </select>
+                <label for="repairPhoto_${item.id}" style="display:block; margin-top:12px;">Foto Bukti Perbaikan (wajib):</label>
+                <input type="file" id="repairPhoto_${item.id}" class="form-control" accept="image/*" required>
+                <button type="button" class="btn btn-primary" style="margin-top:12px;"
+                    onclick="updateRepairStatus(${item.id})">Simpan Status &amp; Foto Bukti</button>
             </div>
         </div>
     `;
@@ -89,21 +93,32 @@
             } catch (e) { console.error(e); }
         }
 
-        async function updateRepairStatus(id, status_repair) {
+        async function updateRepairStatus(id) {
+            const photoInput = document.getElementById(`repairPhoto_${id}`);
+            if (!photoInput.files.length) {
+                photoInput.reportValidity();
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('_method', 'PATCH');
+            formData.append('status_repair', document.getElementById(`repairStatus_${id}`).value);
+            formData.append('photo', photoInput.files[0]);
+
             try {
                 const res = await fetch(`/api/complaints/${id}/status`, {
-                    method: 'PATCH',
+                    method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'Authorization': 'Bearer ' + token
                     },
-                    body: JSON.stringify({ status_repair })
+                    body: formData
                 });
                 const result = await res.json();
 
                 if (!res.ok) {
-                    throw new Error(result.message || 'Gagal memperbarui status perbaikan.');
+                    const validationMessage = Object.values(result.errors || {}).flat()[0];
+                    throw new Error(result.message || validationMessage || 'Gagal memperbarui status perbaikan.');
                 }
 
                 await loadComplaints();

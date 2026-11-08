@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ComplaintController extends Controller
@@ -157,9 +158,26 @@ class ComplaintController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
+        $user = $request->user();
+        $complaint = Complaint::with('room')->findOrFail($id);
+
+        if (!in_array($user->role_id, [1, 2], true)) {
+            abort(403);
+        }
+
+        if ((int) $user->role_id === 2 && $complaint->room->pic_id !== $user->id) {
+            abort(403);
+        }
+
+        $rules = [
             'status_repair' => 'required|string|in:Belum Diperbaiki,Menunggu Spare Part,Sudah Diperbaiki',
-        ]);
+        ];
+
+        if ((int) $user->role_id === 2) {
+            $rules['photo'] = 'required|image|max:10240';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
@@ -168,21 +186,24 @@ class ComplaintController extends Controller
             ], 422);
         }
 
-        $user = $request->user();
-        $complaint = Complaint::with('room')->findOrFail($id);
-
-        if (!in_array($user->role_id, [1, 2], true)) {
-            abort(403);
-        }
-
-        if ($user->role_id === 2 && $complaint->room->pic_id !== $user->id) {
-            abort(403);
-        }
-
-        $complaint->update([
+        $updates = [
             'status_repair' => $request->status_repair,
             'handler_id' => $user->id,
-        ]);
+        ];
+
+        if ((int) $user->role_id === 2) {
+            $photoPath = $request->file('photo')->store('complaint-repairs', 'public');
+            if (!$photoPath) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Foto bukti gagal disimpan. Silakan coba lagi.',
+                ], 500);
+            }
+
+            $updates['repair_photo_path'] = $photoPath;
+        }
+
+        $complaint->update($updates);
 
         return response()->json([
             'status' => 'success',

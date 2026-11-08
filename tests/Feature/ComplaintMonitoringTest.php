@@ -5,6 +5,8 @@ use App\Models\Role;
 use App\Models\Room;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
@@ -105,7 +107,7 @@ test('guru complaint listing does not expose the room PIC phone number', functio
         ->assertJsonMissingPath('data.0.room.pic');
 });
 
-test('pic can update the repair status and waka sees the updated status', function () {
+test('pic must upload repair evidence to update status and waka can see the evidence', function () {
     $wakaRole = Role::create(['role_name' => 'Waka']);
     $picRole = Role::create(['role_name' => 'PIC Ruang']);
     $teacherRole = Role::create(['role_name' => 'Guru']);
@@ -151,24 +153,39 @@ test('pic can update the repair status and waka sees the updated status', functi
 
     Sanctum::actingAs($pic);
 
-    $updateResponse = $this->patchJson("/api/complaints/{$complaint->id}/status", [
+    $this->patchJson("/api/complaints/{$complaint->id}/status", [
         'status_repair' => 'Menunggu Spare Part',
-    ]);
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors('photo');
+
+    Storage::fake('public');
+    $updateResponse = $this->post("/api/complaints/{$complaint->id}/status", [
+        '_method' => 'PATCH',
+        'status_repair' => 'Menunggu Spare Part',
+        'photo' => UploadedFile::fake()->image('bukti-perbaikan.jpg'),
+    ], ['Accept' => 'application/json']);
 
     $updateResponse->assertOk()
-        ->assertJsonPath('data.status_repair', 'Menunggu Spare Part');
+        ->assertJsonPath('data.status_repair', 'Menunggu Spare Part')
+        ->assertJsonStructure(['data' => ['repair_photo_path']]);
+
+    $repairPhotoPath = $updateResponse->json('data.repair_photo_path');
+    expect($repairPhotoPath)->toStartWith('complaint-repairs/');
+    Storage::disk('public')->assertExists($repairPhotoPath);
 
     $this->assertDatabaseHas('complaints', [
         'id' => $complaint->id,
         'status_repair' => 'Menunggu Spare Part',
         'handler_id' => $pic->id,
+        'repair_photo_path' => $repairPhotoPath,
     ]);
 
     Sanctum::actingAs($waka);
 
     $this->getJson('/api/complaints')
         ->assertOk()
-        ->assertJsonPath('data.0.status_repair', 'Menunggu Spare Part');
+        ->assertJsonPath('data.0.status_repair', 'Menunggu Spare Part')
+        ->assertJsonPath('data.0.repair_photo_path', $repairPhotoPath);
 });
 
 test('pic cannot update a complaint for a room they do not manage', function () {

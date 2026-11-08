@@ -848,13 +848,13 @@
                                     <th>Deskripsi Kerusakan</th>
                                     <th>Pelapor</th>
                                     <th>Status Perbaikan</th>
+                                    <th>Foto Bukti PIC</th>
                                     <th>Aksi</th> <!-- KOLOM BARU -->
                                 </tr>
                             </thead>
                             <tbody id="complaintsTableBody">
                                 <tr>
-                                    <!-- UBAH COLSPAN MENJADI 5 -->
-                                    <td colspan="5" style="text-align: center; color: #64748b; padding: 16px;">Memuat
+                                    <td colspan="6" style="text-align: center; color: #64748b; padding: 16px;">Memuat
                                         laporan perbaikan...</td>
                                 </tr>
                             </tbody>
@@ -1529,6 +1529,13 @@
                         ? '<span class="badge badge-success" style="background:#28a745; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Selesai Diperbaiki</span>'
                         : '<span class="badge badge-danger" style="background:#dc3545; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Belum Diperbaiki</span>';
 
+                    let repairPhoto = c.repair_photo_path
+                        ? `<a href="/storage/${encodeURIComponent(c.repair_photo_path).replace(/%2F/g, '/')}" target="_blank" rel="noopener noreferrer">
+                               <img src="/storage/${encodeURIComponent(c.repair_photo_path).replace(/%2F/g, '/')}" alt="Foto bukti perbaikan"
+                                   style="width:72px; height:72px; object-fit:cover; border-radius:6px;">
+                           </a>`
+                        : '<span style="color:#94a3b8;">Belum ada</span>';
+
                     // 2. Logika Tombol WhatsApp Alert PIC
                     let actionBtn = '-';
 
@@ -1562,13 +1569,13 @@
                 <td>${c.description || '-'}</td>
                 <td>${c.user ? (c.user.fullname || c.user.name) : 'Guru'}</td>
                 <td>${badge}</td>
+                <td>${repairPhoto}</td>
                 <td>${actionBtn}</td>
             </tr>
             `;
                 });
 
-                tableBody.innerHTML = rows || `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 16px;">Belum ada laporan kerusakan.</td></tr>`;
-                tableBody.innerHTML = rows || `<tr><td colspan="4" style="text-align: center; padding: 16px;">Belum ada laporan kerusakan.</td></tr>`;
+                tableBody.innerHTML = rows || `<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 16px;">Belum ada laporan kerusakan.</td></tr>`;
             } catch (e) {
                 console.error(e);
             }

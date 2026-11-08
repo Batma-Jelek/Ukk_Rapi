@@ -508,6 +508,12 @@
                             <path d="M16 3v4M8 3v4M3 10h18M8 14h2M14 14h2M8 17h2"></path>
                         </svg>Kalender Jadwal
                     </a>
+                    <a class="nav-link" onclick="showTab('monitoringKerusakanTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M14 6a5 5 0 0 0-6.5 6.5L3 17l4 4 4.5-4.5A5 5 0 0 0 18 10l-3 3-4-4 3-3z"></path>
+                        </svg>Monitoring Kerusakan
+                    </a>
                 </nav>
             </div>
 
@@ -607,6 +613,7 @@
                                 <option value="">-- Semua Ruangan --</option>
                             </select>
                         </div>
+
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="filterDate">Filter Tanggal</label>
                             <input type="date" id="filterDate" onchange="renderCalendar()">
@@ -617,6 +624,18 @@
                 <h3 style="margin-bottom: 16px;">Jadwal Agenda Disetujui</h3>
                 <div id="calendarGrid" class="grid-cards">
                     <p>Memuat jadwal kalender...</p>
+                </div>
+            </div>
+
+            <div id="monitoringKerusakanTab" class="section-tab">
+                <header class="content-header">
+                    <h1>Monitoring Kerusakan</h1>
+                </header>
+                <div class="card">
+                    <p style="color:#64748b; margin-bottom:16px;">Daftar ini hanya menampilkan laporan yang Anda buat. Informasi bersifat baca-saja.</p>
+                    <div id="ownComplaintsList" class="grid-cards">
+                        <p>Memuat laporan kerusakan...</p>
+                    </div>
                 </div>
             </div>
         </main>
@@ -678,6 +697,81 @@
             // Jika tab kalender dibuka, muat data kalender jika belum termuat
             if (tabId === 'kalenderTab') {
                 initCalendar();
+            }
+            if (tabId === 'monitoringKerusakanTab') {
+                loadOwnComplaints();
+            }
+        }
+
+        async function loadOwnComplaints() {
+            const container = document.getElementById('ownComplaintsList');
+            container.replaceChildren(Object.assign(document.createElement('p'), { textContent: 'Memuat laporan kerusakan...' }));
+
+            try {
+                const response = await fetch('/api/complaints', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                const result = await response.json();
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || 'Laporan kerusakan gagal dimuat.');
+                }
+
+                container.replaceChildren();
+                if (!result.data.length) {
+                    container.append(Object.assign(document.createElement('p'), {
+                        textContent: 'Anda belum mengirim laporan kerusakan.'
+                    }));
+                    return;
+                }
+
+                result.data.forEach(complaint => {
+                    const card = document.createElement('article');
+                    card.className = 'card';
+
+                    const room = document.createElement('h3');
+                    room.textContent = complaint.room?.room_name || 'Ruangan';
+                    card.appendChild(room);
+
+                    const description = document.createElement('p');
+                    description.textContent = complaint.description || '-';
+                    card.appendChild(description);
+
+                    const status = document.createElement('p');
+                    status.style.marginTop = '12px';
+                    status.textContent = `Status perbaikan: ${complaint.status_repair || 'Belum Diperbaiki'}`;
+                    card.appendChild(status);
+
+                    [[complaint.photo_path, 'Foto laporan'], [complaint.repair_photo_path, 'Foto bukti perbaikan']].forEach(([path, label]) => {
+                        const section = document.createElement('div');
+                        section.style.marginTop = '12px';
+                        const caption = document.createElement('p');
+                        caption.textContent = label;
+                        section.appendChild(caption);
+
+                        if (path) {
+                            const image = document.createElement('img');
+                            image.src = `/storage/${path.split('/').map(encodeURIComponent).join('/')}`;
+                            image.alt = label;
+                            image.style.cssText = 'max-width:100%; max-height:200px; border-radius:8px; object-fit:cover;';
+                            section.appendChild(image);
+                        } else {
+                            const empty = document.createElement('small');
+                            empty.textContent = 'Belum tersedia';
+                            section.appendChild(empty);
+                        }
+                        card.appendChild(section);
+                    });
+
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Gagal memuat laporan kerusakan:', error);
+                container.replaceChildren(Object.assign(document.createElement('p'), {
+                    textContent: error.message || 'Laporan kerusakan gagal dimuat.'
+                }));
             }
         }
 
