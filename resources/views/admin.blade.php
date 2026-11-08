@@ -729,6 +729,12 @@
                             <path d="M12 3 2.8 19h18.4L12 3zM12 9v4M12 16h.01"></path>
                         </svg>Laporan Kerusakan
                     </a>
+                    <a class="nav-link" onclick="showTab('laporanTab', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"></path>
+                        </svg>Laporan Harian/Mingguan/Bulanan
+                    </a>
 
                     <!-- Menu Baru: Manajemen Akun -->
                     <a class="nav-link" onclick="showTab('akunTab', this)">
@@ -953,6 +959,36 @@
 
                         <button type="submit" class="btn-warning">Kirim Laporan Kerusakan</button>
                     </form>
+                </div>
+            </div>
+
+            <div id="laporanTab" class="section-tab">
+                <header class="content-header">
+                    <h1>Laporan Peminjaman Ruang & Kerusakan</h1>
+                </header>
+                <div class="card">
+                    <h3>Unduh Laporan PDF</h3>
+                    <p style="color:#64748b; margin-bottom:16px;">
+                        Laporan berisi agenda berdasarkan tanggal pelaksanaan dan kerusakan berdasarkan tanggal laporan.
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reportPeriod">Periode Laporan</label>
+                            <select id="reportPeriod" class="form-control">
+                                <option value="daily">Harian</option>
+                                <option value="weekly">Mingguan</option>
+                                <option value="monthly">Bulanan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label id="reportDateLabel" for="reportDate">Tanggal</label>
+                            <input type="date" id="reportDate" class="form-control" required>
+                        </div>
+                    </div>
+                    <button type="button" id="downloadReportButton" class="btn-primary">
+                        Unduh Laporan PDF
+                    </button>
+                    <p id="reportDownloadStatus" role="status" style="margin-top:12px; color:#64748b;"></p>
                 </div>
             </div>
 
@@ -1203,6 +1239,371 @@
                 loadAccounts();
             }
         }
+
+        const reportPeriodInput = document.getElementById('reportPeriod');
+        const reportDateInput = document.getElementById('reportDate');
+        const reportDateLabel = document.getElementById('reportDateLabel');
+        const reportStatus = document.getElementById('reportDownloadStatus');
+        const downloadReportButton = document.getElementById('downloadReportButton');
+
+        function localDateValue(date) {
+            return [
+                date.getFullYear(),
+                String(date.getMonth() + 1).padStart(2, '0'),
+                String(date.getDate()).padStart(2, '0')
+            ].join('-');
+        }
+
+        function updateReportDateInput() {
+            const previousValue = reportDateInput.value;
+            const wasMonthly = reportDateInput.type === 'month';
+            const isMonthly = reportPeriodInput.value === 'monthly';
+            reportDateInput.type = isMonthly ? 'month' : 'date';
+            reportDateLabel.textContent = isMonthly
+                ? 'Bulan'
+                : reportPeriodInput.value === 'weekly'
+                    ? 'Tanggal acuan (minggu Senin-Minggu)'
+                    : 'Tanggal';
+            const today = localDateValue(new Date());
+            if (isMonthly) {
+                reportDateInput.value = previousValue ? previousValue.slice(0, 7) : today.slice(0, 7);
+            } else if (wasMonthly && previousValue) {
+                reportDateInput.value = `${previousValue}-01`;
+            } else {
+                reportDateInput.value = previousValue || today;
+            }
+        }
+
+        reportPeriodInput.addEventListener('change', updateReportDateInput);
+        updateReportDateInput();
+
+        function getReportDateRange(period, dateValue) {
+            const parts = dateValue.split('-').map(Number);
+            const selectedDate = period === 'monthly'
+                ? new Date(Date.UTC(parts[0], parts[1] - 1, 1))
+                : new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+            let startDate = selectedDate;
+            let endDate = selectedDate;
+
+            if (period === 'weekly') {
+                const daysSinceMonday = (selectedDate.getUTCDay() + 6) % 7;
+                startDate = new Date(selectedDate);
+                startDate.setUTCDate(selectedDate.getUTCDate() - daysSinceMonday);
+                endDate = new Date(startDate);
+                endDate.setUTCDate(startDate.getUTCDate() + 6);
+            } else if (period === 'monthly') {
+                endDate = new Date(Date.UTC(parts[0], parts[1], 0));
+            }
+
+            return {
+                start: startDate.toISOString().slice(0, 10),
+                end: endDate.toISOString().slice(0, 10)
+            };
+        }
+
+        function reportAsciiText(value) {
+            return String(value ?? '-')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^\x20-\x7e]/g, '?');
+        }
+
+        function pdfSafeText(value) {
+            return reportAsciiText(value).replace(/[\\()]/g, '\\$&');
+        }
+
+        function wrapReportCell(value, width, fontSize = 8) {
+            const maxLength = Math.max(5, Math.floor((width - 10) / (fontSize * 0.52)));
+            const words = reportAsciiText(value).split(/\s+/);
+            const lines = [];
+            let line = '';
+
+            if (!reportAsciiText(value).trim()) {
+                return [''];
+            }
+
+            words.forEach(word => {
+                while (word.length > maxLength) {
+                    if (line) {
+                        lines.push(line);
+                        line = '';
+                    }
+                    lines.push(word.slice(0, maxLength));
+                    word = word.slice(maxLength);
+                }
+
+                if (line && `${line} ${word}`.length > maxLength) {
+                    lines.push(line);
+                    line = word;
+                } else {
+                    line = line ? `${line} ${word}` : word;
+                }
+            });
+
+            if (line) lines.push(line);
+            return lines.length ? lines : ['-'];
+        }
+
+        function createReportPdf(title, periodLabel, sections) {
+            const pageWidth = 595;
+            const pageHeight = 842;
+            const margin = 42;
+            const contentWidth = pageWidth - margin * 2;
+            const bottomLimit = 54;
+            const pages = [];
+            let page;
+            let cursorY;
+
+            function drawRect(x, y, width, height, color) {
+                page.push(`q ${color} rg ${x} ${y} ${width} ${height} re f Q`);
+            }
+
+            function drawLine(x1, y1, x2, y2, color = '0.86 0.89 0.92', width = 0.6) {
+                page.push(`q ${color} RG ${width} w ${x1} ${y1} m ${x2} ${y2} l S Q`);
+            }
+
+            function drawText(text, x, y, fontSize = 8, font = 'F1', color = '0.16 0.20 0.27') {
+                page.push(`BT /${font} ${fontSize} Tf ${color} rg 1 0 0 1 ${x} ${y} Tm (${pdfSafeText(text)}) Tj ET`);
+            }
+
+            function startPage() {
+                page = [];
+                pages.push(page);
+                drawRect(0, 744, pageWidth, 98, '0.08 0.17 0.30');
+                drawText('RAPI SEKOLAH  /  LAPORAN OPERASIONAL', margin, 814, 9, 'F2', '0.72 0.86 1');
+                drawText(title, margin, 784, 17, 'F2', '1 1 1');
+                drawText(`Periode ${periodLabel}`, margin, 762, 10, 'F1', '0.88 0.93 0.98');
+                drawLine(margin, 730, pageWidth - margin, 730, '0.82 0.87 0.92', 0.8);
+                cursorY = 714;
+            }
+
+            function drawTableHeader(section) {
+                drawRect(margin, cursorY - 23, contentWidth, 23, '0.13 0.31 0.49');
+                let x = margin;
+                section.columns.forEach(column => {
+                    drawText(column.label, x + 5, cursorY - 15, 7.5, 'F2', '1 1 1');
+                    x += column.width;
+                });
+                cursorY -= 23;
+            }
+
+            function drawSectionHeader(section) {
+                drawRect(margin, cursorY - 28, contentWidth, 28, section.color);
+                drawText(section.title, margin + 10, cursorY - 18, 10, 'F2', '1 1 1');
+                cursorY -= 36;
+                drawTableHeader(section);
+            }
+
+            function drawRow(section, row, rowIndex) {
+                const wrappedCells = row.map((value, index) =>
+                    wrapReportCell(value, section.columns[index].width)
+                );
+                let lineOffset = 0;
+                let segmentIndex = 0;
+                const totalLines = Math.max(...wrappedCells.map(lines => lines.length));
+
+                while (lineOffset < totalLines) {
+                    const availableLines = Math.floor((cursorY - bottomLimit - 10) / 10);
+                    if (availableLines < 1) {
+                        startPage();
+                        drawText(`${section.title} (lanjutan)`, margin, cursorY, 9, 'F2', '0.13 0.31 0.49');
+                        cursorY -= 12;
+                        drawTableHeader(section);
+                        continue;
+                    }
+
+                    const segmentLineCount = Math.min(availableLines, totalLines - lineOffset);
+                    const rowHeight = Math.max(25, segmentLineCount * 10 + 10);
+                    drawRect(margin, cursorY - rowHeight, contentWidth, rowHeight,
+                        rowIndex % 2 === 0 ? '0.97 0.98 0.99' : '1 1 1');
+                    drawLine(margin, cursorY - rowHeight, margin + contentWidth, cursorY - rowHeight);
+
+                    let x = margin;
+                    wrappedCells.forEach((cellLines, columnIndex) => {
+                        cellLines.slice(lineOffset, lineOffset + segmentLineCount).forEach((line, lineIndex) => {
+                            drawText(line, x + 5, cursorY - 14 - lineIndex * 10, 8);
+                        });
+                        x += section.columns[columnIndex].width;
+                        if (columnIndex < section.columns.length - 1) {
+                            drawLine(x, cursorY, x, cursorY - rowHeight, '0.90 0.92 0.94', 0.4);
+                        }
+                    });
+                    cursorY -= rowHeight;
+                    lineOffset += segmentLineCount;
+                    segmentIndex++;
+
+                    if (lineOffset < totalLines) {
+                        startPage();
+                        drawText(`${section.title} (lanjutan baris ${rowIndex + 1}, bagian ${segmentIndex + 1})`,
+                            margin, cursorY, 9, 'F2', '0.13 0.31 0.49');
+                        cursorY -= 12;
+                        drawTableHeader(section);
+                    }
+                }
+            }
+
+            startPage();
+            sections.forEach(section => {
+                const minimumHeight = 28 + 23 + 25;
+                if (cursorY - minimumHeight < bottomLimit) startPage();
+                drawSectionHeader(section);
+                const rows = section.rows.length
+                    ? section.rows
+                    : [section.columns.map((_, index) => index === 0 ? section.emptyMessage : '')];
+                rows.forEach((row, index) => drawRow(section, row, index));
+                cursorY -= 22;
+            });
+
+            const objects = [
+                '<< /Type /Catalog /Pages 2 0 R >>',
+                `<< /Type /Pages /Kids [${pages.map((_, index) => `${5 + index * 2} 0 R`).join(' ')}] /Count ${pages.length} >>`,
+                '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+                '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>'
+            ];
+
+            pages.forEach((pageCommands, index) => {
+                const pageObjectId = 5 + index * 2;
+                const contentObjectId = pageObjectId + 1;
+                pageCommands.push(
+                    `q 0.82 0.86 0.90 RG 0.6 w ${margin} 42 m ${pageWidth - margin} 42 l S Q`,
+                    `BT /F1 8 Tf 0.40 0.45 0.52 rg 1 0 0 1 ${margin} 28 Tm (Dicetak dari Sistem RAPI Sekolah) Tj ET`,
+                    `BT /F1 8 Tf 0.40 0.45 0.52 rg 1 0 0 1 ${pageWidth - margin - 76} 28 Tm (${pdfSafeText(`Halaman ${index + 1} / ${pages.length}`)}) Tj ET`
+                );
+                const content = pageCommands.join('\n');
+
+                objects.push(
+                    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentObjectId} 0 R >>`,
+                    `<< /Length ${content.length} >>\nstream\n${content}\nendstream`
+                );
+            });
+
+            let pdf = '%PDF-1.4\n';
+            const offsets = [0];
+            objects.forEach((object, index) => {
+                offsets.push(pdf.length);
+                pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+            });
+
+            const xrefOffset = pdf.length;
+            pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+            offsets.slice(1).forEach(offset => {
+                pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
+            });
+            pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+
+            return new Blob([pdf], { type: 'application/pdf' });
+        }
+
+        async function downloadOperationalReport() {
+            if (!reportDateInput.value) {
+                reportDateInput.reportValidity();
+                return;
+            }
+
+            const period = reportPeriodInput.value;
+            const range = getReportDateRange(period, reportDateInput.value);
+            const periodName = { daily: 'Harian', weekly: 'Mingguan', monthly: 'Bulanan' }[period];
+            downloadReportButton.disabled = true;
+            reportStatus.textContent = 'Menyiapkan laporan PDF...';
+
+            try {
+                const headers = {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Accept': 'application/json'
+                };
+                const [eventResponse, complaintResponse] = await Promise.all([
+                    fetch('/api/events', { headers }),
+                    fetch('/api/complaints', { headers })
+                ]);
+                const [eventResult, complaintResult] = await Promise.all([
+                    eventResponse.json(),
+                    complaintResponse.json()
+                ]);
+
+                if (!eventResponse.ok || !complaintResponse.ok) {
+                    throw new Error(eventResult.message || complaintResult.message || 'Data laporan gagal dimuat.');
+                }
+
+                const events = Array.isArray(eventResult) ? eventResult : (eventResult.data || []);
+                const complaints = Array.isArray(complaintResult) ? complaintResult : (complaintResult.data || []);
+                if (!Array.isArray(events) || !Array.isArray(complaints)) {
+                    throw new Error('Format data agenda atau laporan kerusakan tidak valid.');
+                }
+
+                const periodEvents = events.filter(event => {
+                    const eventDate = String(event.date || '').slice(0, 10);
+                    return eventDate >= range.start && eventDate <= range.end;
+                });
+                const periodComplaints = complaints.filter(complaint => {
+                    const reportedDate = String(complaint.reported_at || complaint.created_at || '').slice(0, 10);
+                    return reportedDate >= range.start && reportedDate <= range.end;
+                });
+                const sections = [
+                    {
+                        title: `PEMINJAMAN RUANG  |  ${periodEvents.length} agenda`,
+                        color: '0.10 0.43 0.67',
+                        columns: [
+                            { label: 'Tanggal', width: 58 },
+                            { label: 'Kegiatan', width: 132 },
+                            { label: 'Ruangan', width: 76 },
+                            { label: 'Waktu', width: 58 },
+                            { label: 'Pemohon', width: 100 },
+                            { label: 'Status', width: 87 }
+                        ],
+                        rows: periodEvents.map(event => [
+                            String(event.date || '').slice(0, 10),
+                            event.event_name || '-',
+                            event.room?.room_name || '-',
+                            `${String(event.start_time || '').slice(0, 5)}-${String(event.end_time || '').slice(0, 5)}`,
+                            event.user?.fullname || '-',
+                            event.status || '-'
+                        ]),
+                        emptyMessage: 'Tidak ada agenda peminjaman pada periode ini.'
+                    },
+                    {
+                        title: `LAPORAN KERUSAKAN  |  ${periodComplaints.length} laporan`,
+                        color: '0.12 0.52 0.48',
+                        columns: [
+                            { label: 'Tgl. Laporan', width: 68 },
+                            { label: 'Ruangan', width: 88 },
+                            { label: 'Deskripsi Kerusakan', width: 176 },
+                            { label: 'Pelapor', width: 94 },
+                            { label: 'Status Perbaikan', width: 85 }
+                        ],
+                        rows: periodComplaints.map(complaint => [
+                            String(complaint.reported_at || complaint.created_at || '').slice(0, 10),
+                            complaint.room?.room_name || '-',
+                            complaint.description || '-',
+                            complaint.user?.fullname || complaint.reporter?.fullname || '-',
+                            complaint.status_repair || '-'
+                        ]),
+                        emptyMessage: 'Tidak ada laporan kerusakan pada periode ini.'
+                    }
+                ];
+
+                const fileName = `laporan-rapi-${period}-${range.start}-${range.end}.pdf`;
+                const downloadUrl = URL.createObjectURL(createReportPdf(
+                    'Laporan Peminjaman Ruang & Kerusakan',
+                    `${periodName} | ${range.start} s.d. ${range.end}`,
+                    sections
+                ));
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+                reportStatus.textContent = `PDF berhasil dibuat: ${periodEvents.length} agenda dan ${periodComplaints.length} laporan kerusakan.`;
+            } catch (error) {
+                console.error('Gagal membuat laporan PDF:', error);
+                reportStatus.textContent = error.message || 'Laporan PDF gagal dibuat.';
+            } finally {
+                downloadReportButton.disabled = false;
+            }
+        }
+
+        downloadReportButton.addEventListener('click', downloadOperationalReport);
 
         document.getElementById('accountsRoleFilter')?.addEventListener('change', loadAccounts);
 
