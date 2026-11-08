@@ -713,9 +713,32 @@
             }
         }
 
+        const eventDateInput = document.getElementById('date');
+        function updateEventDateMinimum() {
+            const today = new Date();
+            const localDate = [
+                today.getFullYear(),
+                String(today.getMonth() + 1).padStart(2, '0'),
+                String(today.getDate()).padStart(2, '0')
+            ].join('-');
+            eventDateInput.min = localDate;
+            if (eventDateInput.value && eventDateInput.value < localDate) {
+                eventDateInput.value = '';
+            }
+        }
+
+        updateEventDateMinimum();
+        eventDateInput?.addEventListener('focus', updateEventDateMinimum);
+
         // 2. Submit Handler: Form Pengajuan
         document.getElementById('eventForm')?.addEventListener('submit', async function (e) {
             e.preventDefault();
+            updateEventDateMinimum();
+            if (!eventDateInput.checkValidity()) {
+                eventDateInput.reportValidity();
+                return;
+            }
+
             const payload = {
                 event_name: document.getElementById('event_name').value,
                 room_id: document.getElementById('event_room_id').value,

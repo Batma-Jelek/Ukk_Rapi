@@ -56,4 +56,32 @@ class UserController extends Controller
             'data'    => $user
         ], 201);
     }
+
+    // Perbarui akun (Oleh Admin)
+    public function update(Request $request, User $user)
+    {
+        abort_unless((int) $request->user()->role_id === 1, 403, 'Hanya admin yang dapat mengubah akun.');
+
+        $validated = $request->validate([
+            'username'     => 'required|string|unique:users,username,'.$user->id,
+            'fullname'     => 'required|string',
+            'phone_number' => 'required|string|max:20',
+            'role_id'      => 'required|integer|exists:roles,id',
+            'password'     => 'nullable|string|min:6',
+        ]);
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        $user->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pengguna berhasil diperbarui.',
+            'data'    => $user->load('role:id,role_name'),
+        ], 200);
+    }
 }

@@ -58,4 +58,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users/manual', [UserController::class, 'store']);
     // Daftar pengguna (Oleh Admin), termasuk dropdown PIC Ruangan
     Route::get('/users', [UserController::class, 'index']);
+    Route::put('/users/{user}', [UserController::class, 'update']);
 });

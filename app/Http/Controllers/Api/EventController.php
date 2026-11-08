@@ -31,6 +31,7 @@ class EventController extends Controller
     {
         $events = Event::with(['room', 'user'])
             ->whereIn('status', ['approved', 'Approved', 'moved', 'Moved'])
+            ->latest()
             ->get();
 
         return response()->json([

@@ -349,6 +349,15 @@
             font-size: 18px;
         }
 
+        #editAccountModal .veto-modal-header {
+            background: #e0f2fe;
+            border-bottom-color: #bae6fd;
+        }
+
+        #editAccountModal .veto-modal-header h2 {
+            color: #075985;
+        }
+
         .veto-modal-close {
             border: 0;
             background: transparent;
@@ -1038,11 +1047,12 @@
                                     <th style="padding: 12px 8px;">Username</th>
                                     <th style="padding: 12px 8px;">Role</th>
                                     <th style="padding: 12px 8px;">No. HP</th>
+                                    <th style="padding: 12px 8px;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="accountsTableBody">
                                 <tr>
-                                    <td colspan="4" style="padding: 16px; text-align: center; color: #64748b;">
+                                    <td colspan="5" style="padding: 16px; text-align: center; color: #64748b;">
                                         Memuat daftar akun...
                                     </td>
                                 </tr>
@@ -1056,6 +1066,51 @@
     </div>
 
     </main>
+    </div>
+
+    <div class="veto-modal" id="editAccountModal" aria-hidden="true">
+        <div class="veto-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="editAccountModalTitle">
+            <div class="veto-modal-header">
+                <h2 id="editAccountModalTitle">Edit Akun Pengguna</h2>
+                <button type="button" class="veto-modal-close" onclick="closeEditAccountModal()"
+                    aria-label="Tutup">&times;</button>
+            </div>
+            <form id="editAccountForm">
+                <div class="veto-modal-body">
+                    <input type="hidden" id="edit_account_id">
+                    <div class="form-group">
+                        <label for="edit_account_name">Nama Lengkap</label>
+                        <input type="text" id="edit_account_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_account_username">Username</label>
+                        <input type="text" id="edit_account_username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_account_phone">No. HP / WhatsApp</label>
+                        <input type="text" id="edit_account_phone" maxlength="20" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_account_role">Role / Hak Akses</label>
+                        <select id="edit_account_role" required>
+                            <option value="1">Waka / Admin</option>
+                            <option value="2">PIC Ruang</option>
+                            <option value="3">Guru</option>
+                            <option value="4">Organisasi Sekolah</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_account_password">Password Baru (Opsional)</label>
+                        <input type="password" id="edit_account_password" minlength="6"
+                            placeholder="Kosongkan jika tidak ingin mengganti">
+                    </div>
+                </div>
+                <div class="veto-modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeEditAccountModal()">Batal</button>
+                    <button type="submit" class="btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Modal Hak Veto Pindah Ruangan -->
@@ -1155,7 +1210,7 @@
             const tableBody = document.getElementById('accountsTableBody');
             if (!tableBody) return;
 
-            tableBody.innerHTML = '<tr><td colspan="4" style="padding: 16px; text-align: center; color: #64748b;">Memuat daftar akun...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" style="padding: 16px; text-align: center; color: #64748b;">Memuat daftar akun...</td></tr>';
 
             try {
                 const roleId = document.getElementById('accountsRoleFilter').value;
@@ -1176,7 +1231,7 @@
                 if (!result.data.length) {
                     const row = tableBody.insertRow();
                     const cell = row.insertCell();
-                    cell.colSpan = 4;
+                    cell.colSpan = 5;
                     cell.style.cssText = 'padding: 16px; text-align: center; color: #64748b;';
                     cell.textContent = 'Belum ada akun untuk role ini.';
                     return;
@@ -1195,16 +1250,103 @@
                         cell.style.borderBottom = '1px solid #e2e8f0';
                         cell.textContent = value;
                     });
+
+                    const actionCell = row.insertCell();
+                    actionCell.style.padding = '12px 8px';
+                    actionCell.style.borderBottom = '1px solid #e2e8f0';
+                    const editButton = document.createElement('button');
+                    editButton.type = 'button';
+                    editButton.className = 'btn-primary';
+                    editButton.style.padding = '6px 12px';
+                    editButton.textContent = 'Edit';
+                    editButton.addEventListener('click', () => openEditAccountModal(account));
+                    actionCell.appendChild(editButton);
                 });
             } catch (error) {
                 console.error('Gagal memuat daftar akun:', error);
                 const row = tableBody.insertRow();
                 const cell = row.insertCell();
-                cell.colSpan = 4;
+                cell.colSpan = 5;
                 cell.style.cssText = 'padding: 16px; text-align: center; color: #ef4444;';
                 cell.textContent = error.message || 'Daftar akun gagal dimuat.';
             }
         }
+
+        window.openEditAccountModal = function (account) {
+            document.getElementById('edit_account_id').value = account.id;
+            document.getElementById('edit_account_name').value = account.fullname || '';
+            document.getElementById('edit_account_username').value = account.username || '';
+            document.getElementById('edit_account_phone').value = account.phone_number || '';
+            document.getElementById('edit_account_role').value = account.role_id;
+            document.getElementById('edit_account_password').value = '';
+
+            const modal = document.getElementById('editAccountModal');
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('edit_account_name').focus();
+        };
+
+        window.closeEditAccountModal = function () {
+            const modal = document.getElementById('editAccountModal');
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        };
+
+        document.getElementById('editAccountModal')?.addEventListener('click', event => {
+            if (event.target === event.currentTarget) {
+                window.closeEditAccountModal();
+            }
+        });
+
+        document.getElementById('editAccountForm')?.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const accountId = document.getElementById('edit_account_id').value;
+            const password = document.getElementById('edit_account_password').value;
+            const payload = {
+                fullname: document.getElementById('edit_account_name').value,
+                username: document.getElementById('edit_account_username').value,
+                phone_number: document.getElementById('edit_account_phone').value,
+                role_id: document.getElementById('edit_account_role').value
+            };
+            if (password) payload.password = password;
+
+            const submitButton = this.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch(`/api/users/${encodeURIComponent(accountId)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Perubahan akun gagal disimpan.');
+                }
+
+                alert(result.message || 'Pengguna berhasil diperbarui.');
+                window.closeEditAccountModal();
+                loadAccounts();
+            } catch (error) {
+                console.error('Gagal memperbarui akun:', error);
+                alert(error.message || 'Terjadi kesalahan jaringan.');
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && document.getElementById('editAccountModal')?.classList.contains('is-open')) {
+                window.closeEditAccountModal();
+            }
+        });
 
         // 1. Load Data Agenda (Toleran Case-Sensitivity)
         async function loadEvents() {
@@ -1781,8 +1923,31 @@
 
         initCalendar();
 
+        const eventDateInput = document.getElementById('date');
+        function updateEventDateMinimum() {
+            const today = new Date();
+            const localDate = [
+                today.getFullYear(),
+                String(today.getMonth() + 1).padStart(2, '0'),
+                String(today.getDate()).padStart(2, '0')
+            ].join('-');
+            eventDateInput.min = localDate;
+            if (eventDateInput.value && eventDateInput.value < localDate) {
+                eventDateInput.value = '';
+            }
+        }
+
+        updateEventDateMinimum();
+        eventDateInput?.addEventListener('focus', updateEventDateMinimum);
+
         document.getElementById('eventForm')?.addEventListener('submit', async function (e) {
             e.preventDefault();
+            updateEventDateMinimum();
+            if (!eventDateInput.checkValidity()) {
+                eventDateInput.reportValidity();
+                return;
+            }
+
             const payload = {
                 event_name: document.getElementById('event_name').value,
                 room_id: document.getElementById('event_room_id').value,
