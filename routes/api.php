@@ -28,15 +28,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/users/import', AccountsImportController::class);
 
-    // Route Mengambil Daftar User (Dipakai untuk Dropdown PIC Ruangan - Role ID 2)
-    Route::get('/users', function (\Illuminate\Http\Request $request) {
-        $query = \App\Models\User::query();
-        if ($request->has('role_id')) {
-            $query->where('role_id', $request->role_id);
-        }
-        return response()->json(['success' => true, 'data' => $query->get()]);
-    });
-
     // Admin (Role 1): Kelola Ruangan
     Route::post('/rooms', [RoomController::class, 'store']);
     Route::put('/rooms/{id}', [RoomController::class, 'update']);
@@ -63,6 +54,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin (Role 1): Generator Teguran WA ke PIC
     Route::get('/complaints/{id}/wa-link', [ComplaintController::class, 'getWaLink']);
-
+    //Tambah akun manual (Oleh Admin)
     Route::post('/users/manual', [UserController::class, 'store']);
+    // Daftar pengguna (Oleh Admin), termasuk dropdown PIC Ruangan
+    Route::get('/users', [UserController::class, 'index']);
 });

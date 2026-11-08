@@ -731,7 +731,6 @@
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>Manajemen Akun
                     </a>
-
                 </nav>
             </div>
             <div class="sidebar-footer">
@@ -1016,6 +1015,41 @@
                         </button>
                     </form>
                 </div>
+
+                <div class="card" style="margin-top: 24px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+                        <h3 style="margin: 0;">Daftar Akun</h3>
+                        <label for="accountsRoleFilter" style="display: flex; align-items: center; gap: 8px;">
+                            Tampilkan role:
+                            <select id="accountsRoleFilter" class="form-control" style="min-width: 190px;">
+                                <option value="">Semua Role</option>
+                                <option value="2">PIC Ruang</option>
+                                <option value="3">Guru</option>
+                                <option value="4">Organisasi</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="text-align: left; border-bottom: 1px solid #e2e8f0;">
+                                    <th style="padding: 12px 8px;">Nama</th>
+                                    <th style="padding: 12px 8px;">Username</th>
+                                    <th style="padding: 12px 8px;">Role</th>
+                                    <th style="padding: 12px 8px;">No. HP</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accountsTableBody">
+                                <tr>
+                                    <td colspan="4" style="padding: 16px; text-align: center; color: #64748b;">
+                                        Memuat daftar akun...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
     </div>
@@ -1109,6 +1143,66 @@
             if (tabId === 'ruanganTab') {
                 loadPicUsers();
                 loadRooms();
+            }
+            if (tabId === 'akunTab') {
+                loadAccounts();
+            }
+        }
+
+        document.getElementById('accountsRoleFilter')?.addEventListener('change', loadAccounts);
+
+        async function loadAccounts() {
+            const tableBody = document.getElementById('accountsTableBody');
+            if (!tableBody) return;
+
+            tableBody.innerHTML = '<tr><td colspan="4" style="padding: 16px; text-align: center; color: #64748b;">Memuat daftar akun...</td></tr>';
+
+            try {
+                const roleId = document.getElementById('accountsRoleFilter').value;
+                const query = roleId ? `?role_id=${encodeURIComponent(roleId)}` : '';
+                const response = await fetch(`/api/users${query}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Daftar akun gagal dimuat.');
+                }
+
+                tableBody.replaceChildren();
+                if (!result.data.length) {
+                    const row = tableBody.insertRow();
+                    const cell = row.insertCell();
+                    cell.colSpan = 4;
+                    cell.style.cssText = 'padding: 16px; text-align: center; color: #64748b;';
+                    cell.textContent = 'Belum ada akun untuk role ini.';
+                    return;
+                }
+
+                result.data.forEach(account => {
+                    const row = tableBody.insertRow();
+                    [
+                        account.fullname || '-',
+                        account.username || '-',
+                        account.role?.role_name || '-',
+                        account.phone_number || '-'
+                    ].forEach(value => {
+                        const cell = row.insertCell();
+                        cell.style.padding = '12px 8px';
+                        cell.style.borderBottom = '1px solid #e2e8f0';
+                        cell.textContent = value;
+                    });
+                });
+            } catch (error) {
+                console.error('Gagal memuat daftar akun:', error);
+                const row = tableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 4;
+                cell.style.cssText = 'padding: 16px; text-align: center; color: #ef4444;';
+                cell.textContent = error.message || 'Daftar akun gagal dimuat.';
             }
         }
 
@@ -1418,6 +1512,7 @@
                 if (res.ok) {
                     alert('Akun berhasil dibuat!');
                     this.reset();
+                    loadAccounts();
                 } else {
                     alert('Gagal membuat akun: ' + (result.message || 'Cek kembali data Anda.'));
                 }
@@ -1458,6 +1553,7 @@
                 if (res.ok) {
                     alert(`Import berhasil! ${result.imported_count} akun ditambahkan.`);
                     this.reset();
+                    loadAccounts();
                 } else {
                     alert('Gagal import: ' + (result.message || 'Format file salah.'));
                 }

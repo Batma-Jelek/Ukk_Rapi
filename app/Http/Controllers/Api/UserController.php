@@ -10,15 +10,30 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     // List pengguna
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('role')->get();
+        abort_unless((int) $request->user()->role_id === 1, 403, 'Hanya admin yang dapat melihat daftar akun.');
+
+        $validated = $request->validate([
+            'role_id' => 'sometimes|integer|exists:roles,id',
+        ]);
+
+        $users = User::with('role:id,role_name')
+            ->when(
+                isset($validated['role_id']),
+                fn ($query) => $query->where('role_id', $validated['role_id'])
+            )
+            ->orderBy('fullname')
+            ->get();
+
         return response()->json(['success' => true, 'data' => $users], 200);
     }
 
     // Tambah user baru (Oleh Admin)
     public function store(Request $request)
     {
+        abort_unless((int) $request->user()->role_id === 1, 403, 'Hanya admin yang dapat menambahkan akun.');
+
         $request->validate([
             'username'     => 'required|string|unique:users,username',
             'password'     => 'required|string|min:6',
