@@ -70,7 +70,7 @@
                 </div>
 
                 <button type="submit" id="btnSubmit" class="btn btn-primary login-submit">
-                    <span>Masuk</span><span aria-hidden="true">→</span>
+                    <span>Masuk</span><span aria-hidden="true"></span>
                 </button>
                 <button type="button" id="forgotPasswordButton" class="forgot-password-button" aria-haspopup="dialog" aria-controls="forgotPasswordModal">
                     Lupa sandi?
