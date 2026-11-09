@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\PasswordResetRequest;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -77,6 +78,16 @@ class UserController extends Controller
         }
 
         $user->update($validated);
+
+        if (!empty($validated['password'])) {
+            PasswordResetRequest::query()
+                ->where('user_id', $user->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'completed',
+                    'completed_at' => now(),
+                ]);
+        }
 
         return response()->json([
             'success' => true,

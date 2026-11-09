@@ -6,101 +6,213 @@
     <title>Kalender Pemakaian Ruangan - RAPI Sekolah</title>
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 </head>
-<body>
+<body class="public-calendar">
 
-<header class="top-navbar" style="display: flex; justify-content: space-between; align-items: center; background: var(--secondary); color: white;">
-    <div>
-        <h2>RAPI-Sekolah</h2>
-        <small style="color: #94a3b8;">Jadwal Penggunaan Ruangan (Siswa & Publik)</small>
-    </div>
-    <a href="/login" class="btn btn-primary" style="text-decoration: none; width: auto; padding: 6px 16px;">Login Petugas / Guru</a>
+<header class="calendar-header">
+    <a class="calendar-brand" href="/" aria-label="RAPI-Sekolah - Beranda">
+        <span class="calendar-brand-mark" aria-hidden="true">R</span>
+        <span>
+            <strong>RAPI-Sekolah</strong>
+            <small>Kalender pemakaian ruangan</small>
+        </span>
+    </a>
+    <a href="/login" class="btn btn-primary calendar-login">Login Petugas / Guru</a>
 </header>
 
-<main class="content-area" style="max-width: 1100px; margin: 0 auto;">
-    <!-- Filter Ruangan & Tanggal -->
-    <div class="card" style="margin-bottom: 24px;">
-        <div class="grid-2" style="grid-template-columns: 1fr 1fr;">
-            <div class="form-group" style="margin-bottom: 0;">
-                <label for="filterRoom">Filter Berdasarkan Ruangan</label>
-                <select id="filterRoom" class="form-control" onchange="renderCalendar()">
-                    <option value="">-- Semua Ruangan --</option>
+<main class="calendar-main">
+    <section class="calendar-hero">
+        <div class="calendar-hero-copy">
+            <span class="calendar-eyebrow">JADWAL RUANGAN SEKOLAH</span>
+            <h1>Semua agenda, lebih mudah ditemukan.</h1>
+            <p>Lihat jadwal penggunaan ruangan yang telah disetujui. Gunakan filter untuk menemukan agenda berdasarkan ruangan atau tanggal.</p>
+        </div>
+        <div class="calendar-hero-art" aria-hidden="true">
+            <span class="calendar-art-back"></span>
+            <span class="calendar-art-front">
+                <span class="calendar-art-top"></span>
+                <span class="calendar-art-grid"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            </span>
+        </div>
+    </section>
+
+    <section class="calendar-overview" aria-label="Ringkasan kalender">
+        <article class="calendar-stat">
+            <span class="calendar-stat-icon calendar-stat-blue" aria-hidden="true">▦</span>
+            <span><strong id="agendaCount">0</strong><small>Agenda ditampilkan</small></span>
+        </article>
+        <article class="calendar-stat">
+            <span class="calendar-stat-icon calendar-stat-green" aria-hidden="true">⌂</span>
+            <span><strong id="roomCount">0</strong><small>Ruangan digunakan</small></span>
+        </article>
+        <article class="calendar-stat calendar-stat-filter">
+            <span class="calendar-stat-icon calendar-stat-purple" aria-hidden="true">◷</span>
+            <span><strong id="calendarFilterLabel">Semua tanggal</strong><small>Rentang tampilan</small></span>
+        </article>
+    </section>
+
+    <section class="calendar-filter card" aria-labelledby="calendarFilterTitle">
+        <div class="calendar-section-heading">
+            <div>
+                <span class="calendar-eyebrow">PENCARIAN JADWAL</span>
+                <h2 id="calendarFilterTitle">Cari Agenda Yang Tersedia</h2>
+            </div>
+            <button type="button" id="resetCalendarFilters" class="calendar-reset-button">Reset filter</button>
+        </div>
+        <div class="calendar-filter-fields">
+            <div class="form-group">
+                <label for="filterSearch">Cari nama agenda atau penyelenggara</label>
+                <input type="search" id="filterSearch" class="form-control" placeholder="Contoh: rapat atau nama guru" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="filterRoom">Ruangan</label>
+                <select id="filterRoom" class="form-control">
+                    <option value="">Semua ruangan</option>
                 </select>
             </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label for="filterDate">Filter Tanggal</label>
-                <input type="date" id="filterDate" class="form-control" onchange="renderCalendar()">
+            <div class="form-group">
+                <label for="filterDate">Tanggal agenda</label>
+                <input type="date" id="filterDate" class="form-control">
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Container Grid Agenda -->
-    <h3 style="margin-bottom: 16px;">Jadwal Agenda Disetujui</h3>
-    <div id="calendarGrid" class="grid-cards">
-        <p>Memuat jadwal kalender...</p>
-    </div>
+    <section class="calendar-schedule" aria-labelledby="calendarScheduleTitle">
+        <div class="calendar-section-heading calendar-schedule-heading">
+            <div>
+                <span class="calendar-eyebrow">KALENDER PUBLIK</span>
+                <h2 id="calendarScheduleTitle">Agenda disetujui</h2>
+            </div>
+            <span id="calendarResultsLabel" class="calendar-results-label">Memuat agenda...</span>
+        </div>
+        <div id="calendarGrid" class="calendar-grid" aria-live="polite">
+            <div class="calendar-state-card"><span class="calendar-loading-dot"></span> Memuat jadwal kalender...</div>
+        </div>
+    </section>
 </main>
 
 <script>
 let allEvents = [];
 
-async function initCalendar() {
-    try {
-        // Fetch Ruangan untuk Dropdown Filter
-        const roomRes = await fetch('/api/rooms');
-        const roomData = await roomRes.json();
-        const roomSelect = document.getElementById('filterRoom');
-        
-        (roomData.data || []).forEach(r => {
-            roomSelect.innerHTML += `<option value="${r.id}">${r.room_name}</option>`;
-        });
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+})[character]);
 
-        // Fetch Event Kalender
-        const eventRes = await fetch('/api/calendar');
-        const eventData = await eventRes.json();
-        allEvents = eventData.data || [];
-
-        renderCalendar();
-    } catch (e) {
-        console.error('Gagal memuat kalender:', e);
-    }
+function formatCalendarDate(dateString, options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) {
+    const [year, month, day] = String(dateString || '').slice(0, 10).split('-').map(Number);
+    if (!year || !month || !day) return 'Tanggal belum tersedia';
+    return new Intl.DateTimeFormat('id-ID', options).format(new Date(year, month - 1, day));
 }
 
 function renderCalendar() {
+    const searchTerm = document.getElementById('filterSearch').value.trim().toLocaleLowerCase('id-ID');
     const selectedRoom = document.getElementById('filterRoom').value;
     const selectedDate = document.getElementById('filterDate').value;
     const container = document.getElementById('calendarGrid');
 
-    let filtered = allEvents.filter(item => {
-        let matchRoom = selectedRoom === '' || item.room_id == selectedRoom;
-        let matchDate = selectedDate === '' || item.date === selectedDate;
-        return matchRoom && matchDate;
-    });
+    const filtered = allEvents
+        .filter(item => {
+            const searchableText = `${item.event_name || ''} ${item.user?.fullname || ''} ${item.room?.room_name || ''}`.toLocaleLowerCase('id-ID');
+            const matchSearch = !searchTerm || searchableText.includes(searchTerm);
+            const matchRoom = selectedRoom === '' || String(item.room_id) === selectedRoom;
+            const matchDate = selectedDate === '' || String(item.date).slice(0, 10) === selectedDate;
+            return matchSearch && matchRoom && matchDate;
+        })
+        .sort((a, b) => `${a.date || ''} ${a.start_time || ''}`.localeCompare(`${b.date || ''} ${b.start_time || ''}`));
 
-    container.innerHTML = '';
+    const rooms = new Set(filtered.map(item => item.room?.room_name || item.room_id).filter(Boolean));
+    document.getElementById('agendaCount').textContent = filtered.length;
+    document.getElementById('roomCount').textContent = rooms.size;
+    document.getElementById('calendarFilterLabel').textContent = selectedDate
+        ? formatCalendarDate(selectedDate, { day: 'numeric', month: 'short', year: 'numeric' })
+        : 'Semua tanggal';
+    document.getElementById('calendarResultsLabel').textContent = `${filtered.length} agenda ditampilkan`;
 
     if (filtered.length === 0) {
-        container.innerHTML = '<div class="card" style="grid-column: 1/-1; text-align:center;"><p style="color:var(--text-muted);">Tidak ada agenda terdaftar pada kriteria ini.</p></div>';
+        container.innerHTML = `
+            <div class="calendar-state-card calendar-empty-state">
+                <span class="calendar-empty-icon" aria-hidden="true">⌕</span>
+                <h3>Belum ada agenda yang cocok</h3>
+                <p>Coba pilih ruangan lain atau hapus filter tanggal untuk melihat jadwal lainnya.</p>
+                <button type="button" class="calendar-empty-reset" onclick="resetCalendarFilters()">Tampilkan semua agenda</button>
+            </div>`;
         return;
     }
 
-    filtered.forEach(item => {
-        container.innerHTML += `
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <span class="badge badge-success">${item.room ? item.room.room_name : 'Ruang ID: ' + item.room_id}</span>
-                    <small style="color:var(--text-muted); font-weight:600;">${item.date}</small>
+    container.innerHTML = filtered.map(item => {
+        const roomName = item.room?.room_name || `Ruang ${item.room_id}`;
+        const startTime = String(item.start_time || '').slice(0, 5) || '--:--';
+        const endTime = String(item.end_time || '').slice(0, 5) || '--:--';
+        const organizer = item.user?.fullname || 'Guru / Organisasi';
+        return `
+            <article class="calendar-event-card">
+                <div class="calendar-event-accent"></div>
+                <div class="calendar-event-content">
+                    <div class="calendar-event-topline">
+                        <span class="calendar-room-badge"><span aria-hidden="true">⌂</span>${escapeHtml(roomName)}</span>
+                        <span class="calendar-event-date">${escapeHtml(formatCalendarDate(item.date, { day: 'numeric', month: 'short', year: 'numeric' }))}</span>
+                    </div>
+                    <h3>${escapeHtml(item.event_name || 'Agenda tanpa judul')}</h3>
+                    <div class="calendar-event-time"><span aria-hidden="true">◷</span>${escapeHtml(startTime)} – ${escapeHtml(endTime)} WIB</div>
+                    <div class="calendar-event-footer">
+                        <span class="calendar-organizer-avatar" aria-hidden="true">${escapeHtml(organizer.trim().charAt(0).toUpperCase())}</span>
+                        <span><small>Penyelenggara</small><strong>${escapeHtml(organizer)}</strong></span>
+                    </div>
                 </div>
-                <h4 style="font-size:16px; margin-bottom:8px; color:var(--secondary);">${item.event_name}</h4>
-                <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
-                    🕒 <b>${item.start_time.substring(0,5)} - ${item.end_time.substring(0,5)} WIB</b>
-                </p>
-                <p style="font-size:12px; color:var(--text-main); border-top:1px solid var(--border-color); padding-top:8px;">
-                    Penyelenggara: <b>${item.user ? item.user.fullname : 'Guru/Organisasi'}</b>
-                </p>
-            </div>
-        `;
-    });
+            </article>`;
+    }).join('');
 }
+
+function resetCalendarFilters() {
+    document.getElementById('filterSearch').value = '';
+    document.getElementById('filterRoom').value = '';
+    document.getElementById('filterDate').value = '';
+    renderCalendar();
+}
+
+async function initCalendar() {
+    const container = document.getElementById('calendarGrid');
+    try {
+        const [roomRes, eventRes] = await Promise.all([
+            fetch('/api/rooms'),
+            fetch('/api/calendar')
+        ]);
+        if (!roomRes.ok || !eventRes.ok) {
+            throw new Error('Data kalender belum dapat dimuat. Silakan coba lagi.');
+        }
+
+        const [roomData, eventData] = await Promise.all([roomRes.json(), eventRes.json()]);
+        const roomSelect = document.getElementById('filterRoom');
+        roomSelect.replaceChildren(new Option('Semua ruangan', ''));
+        (roomData.data || []).forEach(room => {
+            const option = document.createElement('option');
+            option.value = room.id;
+            option.textContent = room.room_name;
+            roomSelect.appendChild(option);
+        });
+
+        allEvents = eventData.data || [];
+        renderCalendar();
+    } catch (error) {
+        console.error('Gagal memuat kalender:', error);
+        document.getElementById('calendarResultsLabel').textContent = 'Kalender tidak tersedia';
+        container.innerHTML = `
+            <div class="calendar-state-card calendar-empty-state">
+                <span class="calendar-empty-icon" aria-hidden="true">!</span>
+                <h3>Jadwal belum dapat dimuat</h3>
+                <p>${escapeHtml(error.message || 'Periksa koneksi Anda, lalu coba lagi.')}</p>
+                <button type="button" class="calendar-empty-reset" onclick="initCalendar()">Coba lagi</button>
+            </div>`;
+    }
+}
+
+document.getElementById('filterRoom').addEventListener('change', renderCalendar);
+document.getElementById('filterDate').addEventListener('change', renderCalendar);
+document.getElementById('filterSearch').addEventListener('input', renderCalendar);
+document.getElementById('resetCalendarFilters').addEventListener('click', resetCalendarFilters);
 
 initCalendar();
 </script>

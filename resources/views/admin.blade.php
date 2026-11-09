@@ -1062,6 +1062,34 @@
                 </div>
 
                 <div class="card" style="margin-top: 24px;">
+                    <h3 style="margin-bottom: 16px;">Pengajuan Lupa Sandi</h3>
+                    <p style="color: #64748b; font-size: 13px; margin-bottom: 16px;">
+                        Verifikasi pemohon sebelum mengatur sandi. Pengajuan akan otomatis selesai setelah sandi akun disimpan melalui menu edit akun.
+                    </p>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="text-align: left; border-bottom: 1px solid #e2e8f0;">
+                                    <th style="padding: 12px 8px;">Nama</th>
+                                    <th style="padding: 12px 8px;">Username</th>
+                                    <th style="padding: 12px 8px;">Role</th>
+                                    <th style="padding: 12px 8px;">No. HP</th>
+                                    <th style="padding: 12px 8px;">Tanggal</th>
+                                    <th style="padding: 12px 8px;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="passwordResetRequestsTableBody">
+                                <tr>
+                                    <td colspan="6" style="padding: 16px; text-align: center; color: #64748b;">
+                                        Memuat pengajuan...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 24px;">
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
                         <h3 style="margin: 0;">Daftar Akun</h3>
@@ -1176,7 +1204,7 @@
             </div>
             <div class="veto-modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeVetoModal()">Batal</button>
-                <button type="button" onclick="submitVeto()" class="btn-veto-submit">Eksekusi Veto</button>
+                <button type="button" onclick="submitVeto()" class="btn-veto-submit">Pindahkan</button>
             </div>
         </div>
     </div>
@@ -1237,6 +1265,7 @@
             }
             if (tabId === 'akunTab') {
                 loadAccounts();
+                loadPasswordResetRequests();
             }
         }
 
@@ -1607,6 +1636,97 @@
 
         document.getElementById('accountsRoleFilter')?.addEventListener('change', loadAccounts);
 
+        async function loadPasswordResetRequests() {
+            const tableBody = document.getElementById('passwordResetRequestsTableBody');
+            if (!tableBody) return;
+
+            try {
+                const response = await fetch('/api/password-reset-requests', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Pengajuan lupa sandi gagal dimuat.');
+                }
+
+                tableBody.replaceChildren();
+                if (!result.data.length) {
+                    const row = tableBody.insertRow();
+                    const cell = row.insertCell();
+                    cell.colSpan = 6;
+                    cell.style.cssText = 'padding: 16px; text-align: center; color: #64748b;';
+                    cell.textContent = 'Belum ada pengajuan lupa sandi.';
+                    return;
+                }
+
+                result.data.forEach(resetRequest => {
+                    const row = tableBody.insertRow();
+                    const account = resetRequest.user;
+                    [
+                        account?.fullname || '-',
+                        account?.username || '-',
+                        account?.role?.role_name || '-',
+                        account?.phone_number || '-',
+                        new Date(resetRequest.created_at).toLocaleString('id-ID')
+                    ].forEach(value => {
+                        const cell = row.insertCell();
+                        cell.style.cssText = 'padding: 12px 8px; border-bottom: 1px solid #e2e8f0;';
+                        cell.textContent = value;
+                    });
+
+                    const actionCell = row.insertCell();
+                    actionCell.style.cssText = 'padding: 12px 8px; border-bottom: 1px solid #e2e8f0;';
+                    const editButton = document.createElement('button');
+                    editButton.type = 'button';
+                    editButton.className = 'btn-primary';
+                    editButton.style.cssText = 'padding: 6px 12px; margin-right: 6px;';
+                    editButton.textContent = 'Atur Sandi';
+                    editButton.addEventListener('click', () => openEditAccountModal(account));
+                    actionCell.appendChild(editButton);
+
+                    const completeButton = document.createElement('button');
+                    completeButton.type = 'button';
+                    completeButton.className = 'btn-secondary';
+                    completeButton.textContent = 'Selesai';
+                    completeButton.addEventListener('click', () => completePasswordResetRequest(resetRequest.id));
+                    actionCell.appendChild(completeButton);
+                });
+            } catch (error) {
+                console.error('Gagal memuat pengajuan lupa sandi:', error);
+                tableBody.replaceChildren();
+                const row = tableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 6;
+                cell.style.cssText = 'padding: 16px; text-align: center; color: #ef4444;';
+                cell.textContent = error.message || 'Pengajuan lupa sandi gagal dimuat.';
+            }
+        }
+
+        async function completePasswordResetRequest(requestId) {
+            if (!confirm('Tandai pengajuan ini selesai? Pastikan pemohon sudah diverifikasi dan sandi telah diatur ulang.')) return;
+
+            try {
+                const response = await fetch(`/api/password-reset-requests/${encodeURIComponent(requestId)}/complete`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Pengajuan gagal diselesaikan.');
+                }
+                loadPasswordResetRequests();
+            } catch (error) {
+                console.error('Gagal menyelesaikan pengajuan lupa sandi:', error);
+                alert(error.message || 'Terjadi kesalahan jaringan.');
+            }
+        }
+
         async function loadAccounts() {
             const tableBody = document.getElementById('accountsTableBody');
             if (!tableBody) return;
@@ -1735,6 +1855,7 @@
                 alert(result.message || 'Pengguna berhasil diperbarui.');
                 window.closeEditAccountModal();
                 loadAccounts();
+                loadPasswordResetRequests();
             } catch (error) {
                 console.error('Gagal memperbarui akun:', error);
                 alert(error.message || 'Terjadi kesalahan jaringan.');

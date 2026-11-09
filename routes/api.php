@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\AccountsImportController;
+use App\Http\Controllers\Api\PasswordResetRequestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,7 @@ use App\Http\Controllers\Api\AccountsImportController;
 |--------------------------------------------------------------------------
 */
 Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/password-reset-requests', [PasswordResetRequestController::class, 'store'])->middleware('throttle:5,1');
 Route::get('/rooms', [RoomController::class, 'index']);
 Route::get('/calendar', [EventController::class, 'getCalendarEvents']);
 
@@ -59,4 +61,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Daftar pengguna (Oleh Admin), termasuk dropdown PIC Ruangan
     Route::get('/users', [UserController::class, 'index']);
     Route::put('/users/{user}', [UserController::class, 'update']);
+    Route::get('/password-reset-requests', [PasswordResetRequestController::class, 'index']);
+    Route::patch('/password-reset-requests/{passwordResetRequest}/complete', [PasswordResetRequestController::class, 'complete']);
 });
