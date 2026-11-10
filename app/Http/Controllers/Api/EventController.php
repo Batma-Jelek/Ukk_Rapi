@@ -49,8 +49,8 @@ class EventController extends Controller
             'room_id' => 'required|exists:rooms,id',
             'event_name' => 'required|string|max:200',
             'date' => 'required|date',
-            'start_time' => 'required',
-            'end_time' => 'required|after:start_time',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
         ]);
 
         // Cek Bentrok menggunakan Service

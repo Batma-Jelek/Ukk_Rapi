@@ -411,6 +411,186 @@
             cursor: pointer;
         }
 
+        .calendar-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 16px 18px;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        .calendar-toolbar h3 {
+            margin: 0;
+            color: #0f172a;
+            font-size: 21px;
+        }
+
+        .calendar-navigation {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .calendar-navigation button {
+            min-width: 40px;
+            min-height: 40px;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #0f172a;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .calendar-navigation button:hover {
+            border-color: #0284c7;
+            background: #f0f9ff;
+            color: #0369a1;
+        }
+
+        .calendar-navigation .calendar-today {
+            border-color: #0284c7;
+            background: #0284c7;
+            color: #ffffff;
+        }
+
+        .calendar-weekdays,
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            min-width: 840px;
+        }
+
+        .calendar-weekdays {
+            border: 1px solid #dbe3ee;
+            border-bottom: 0;
+            border-radius: 12px 12px 0 0;
+            background: #eaf4fb;
+        }
+
+        .calendar-weekday {
+            padding: 12px 8px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .calendar-scroll {
+            overflow-x: auto;
+            border-radius: 0 0 12px 12px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .calendar-grid {
+            overflow: hidden;
+            border: 1px solid #dbe3ee;
+            border-radius: 0 0 12px 12px;
+            background: #ffffff;
+        }
+
+        .calendar-day {
+            min-width: 0;
+            min-height: 128px;
+            padding: 9px;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .calendar-day:nth-child(7n) {
+            border-right: 0;
+        }
+
+        .calendar-day.is-other-month {
+            background: #f8fafc;
+        }
+
+        .calendar-day.is-other-month .calendar-day-number {
+            color: #94a3b8;
+        }
+
+        .calendar-day.is-today {
+            background: #f0f9ff;
+        }
+
+        .calendar-day-number {
+            display: flex;
+            width: 30px;
+            height: 30px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+            border-radius: 50%;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .calendar-day.is-today .calendar-day-number {
+            background: #0284c7;
+            color: #ffffff;
+        }
+
+        .calendar-event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .calendar-event {
+            overflow: hidden;
+            padding: 5px 7px;
+            border-left: 3px solid #0284c7;
+            border-radius: 5px;
+            background: #e0f2fe;
+            color: #0c4a6e;
+            font-size: 12px;
+            line-height: 1.35;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .calendar-event strong,
+        .calendar-event span {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .calendar-event span {
+            margin-top: 2px;
+            color: #334155;
+            font-size: 11px;
+        }
+
+        .calendar-event-more {
+            padding: 2px 6px;
+            color: #0369a1;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .calendar-empty-message {
+            margin: 0 0 12px;
+            padding: 12px 14px;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            background: #f0f9ff;
+            color: #334155;
+        }
+
+        .calendar-empty-message[hidden] {
+            display: none;
+        }
+
         @media (max-width: 480px) {
             .veto-modal {
                 padding: 12px;
@@ -633,6 +813,24 @@
 
             .main-content .grid-2 {
                 grid-template-columns: 1fr !important;
+            }
+
+            .calendar-toolbar {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 14px;
+            }
+
+            .calendar-toolbar h3 {
+                font-size: 19px;
+            }
+
+            .calendar-navigation {
+                width: 100%;
+            }
+
+            .calendar-navigation button {
+                flex: 1;
             }
 
             .grid-cards {
@@ -883,15 +1081,33 @@
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="filterDate">Filter Tanggal</label>
-                            <input type="date" id="filterDate" class="form-control" onchange="renderCalendar()">
+                            <input type="date" id="filterDate" class="form-control" onchange="selectCalendarDate()">
                         </div>
                     </div>
                 </div>
 
-                <!-- Container Grid Agenda -->
-                <h3 style="margin-bottom: 16px;">Jadwal Agenda Disetujui</h3>
-                <div id="calendarGrid" class="grid-cards">
-                    <p>Memuat jadwal kalender...</p>
+                <div class="calendar-toolbar">
+                    <h3 id="calendarMonthLabel">Kalender Agenda</h3>
+                    <div class="calendar-navigation" aria-label="Navigasi kalender">
+                        <button type="button" onclick="changeCalendarMonth(-1)" aria-label="Bulan sebelumnya">‹</button>
+                        <button type="button" class="calendar-today" onclick="goToCurrentMonth()">Hari ini</button>
+                        <button type="button" onclick="changeCalendarMonth(1)" aria-label="Bulan berikutnya">›</button>
+                    </div>
+                </div>
+                <p id="calendarEmptyMessage" class="calendar-empty-message" hidden></p>
+                <div class="calendar-scroll">
+                    <div class="calendar-weekdays" aria-hidden="true">
+                        <div class="calendar-weekday">Min</div>
+                        <div class="calendar-weekday">Sen</div>
+                        <div class="calendar-weekday">Sel</div>
+                        <div class="calendar-weekday">Rab</div>
+                        <div class="calendar-weekday">Kam</div>
+                        <div class="calendar-weekday">Jum</div>
+                        <div class="calendar-weekday">Sab</div>
+                    </div>
+                    <div id="calendarGrid" class="calendar-grid" aria-label="Kalender jadwal">
+                        <p>Memuat jadwal kalender...</p>
+                    </div>
                 </div>
             </div>
             <div id="peminjamanTab" class="section-tab">
@@ -918,11 +1134,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Waktu Mulai</label>
-                                <input type="time" id="start_time" required>
+                                <input type="time" id="start_time" step="60" required>
                             </div>
                             <div class="form-group">
                                 <label>Waktu Selesai</label>
-                                <input type="time" id="end_time" required>
+                                <input type="time" id="end_time" step="60" required>
                             </div>
                         </div>
 
@@ -2395,6 +2611,53 @@
 
         // KALENDER
         let allEvents = [];
+        let calendarViewDate = new Date();
+        calendarViewDate.setDate(1);
+
+        function escapeCalendarText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            })[character]);
+        }
+
+        function calendarDateKey(date) {
+            return [
+                date.getFullYear(),
+                String(date.getMonth() + 1).padStart(2, '0'),
+                String(date.getDate()).padStart(2, '0')
+            ].join('-');
+        }
+
+        function selectCalendarDate() {
+            const selectedDate = document.getElementById('filterDate').value;
+            if (selectedDate) {
+                const [year, month, day] = selectedDate.split('-').map(Number);
+                calendarViewDate = new Date(year, month - 1, day);
+            }
+            renderCalendar();
+        }
+
+        function changeCalendarMonth(offset) {
+            const dateFilter = document.getElementById('filterDate');
+            dateFilter.value = '';
+            calendarViewDate = new Date(
+                calendarViewDate.getFullYear(),
+                calendarViewDate.getMonth() + offset,
+                1
+            );
+            renderCalendar();
+        }
+
+        function goToCurrentMonth() {
+            document.getElementById('filterDate').value = '';
+            calendarViewDate = new Date();
+            calendarViewDate.setDate(1);
+            renderCalendar();
+        }
 
         async function initCalendar() {
             try {
@@ -2403,8 +2666,12 @@
                 const roomData = await roomRes.json();
                 const roomSelect = document.getElementById('filterRoom');
 
-                (roomData.data || []).forEach(r => {
-                    roomSelect.innerHTML += `<option value="${r.id}">${r.room_name}</option>`;
+                roomSelect.innerHTML = '<option value="">-- Semua Ruangan --</option>';
+                (roomData.data || []).forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room.id;
+                    option.textContent = room.room_name;
+                    roomSelect.appendChild(option);
                 });
 
                 // Fetch Event Kalender
@@ -2422,37 +2689,70 @@
             const selectedRoom = document.getElementById('filterRoom').value;
             const selectedDate = document.getElementById('filterDate').value;
             const container = document.getElementById('calendarGrid');
-
-            let filtered = allEvents.filter(item => {
-                let matchRoom = selectedRoom === '' || item.room_id == selectedRoom;
-                let matchDate = selectedDate === '' || item.date === selectedDate;
+            const monthLabel = document.getElementById('calendarMonthLabel');
+            const emptyMessage = document.getElementById('calendarEmptyMessage');
+            const year = calendarViewDate.getFullYear();
+            const month = calendarViewDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const totalDays = Math.ceil((firstDay.getDay() + daysInMonth) / 7) * 7;
+            const todayKey = calendarDateKey(new Date());
+            const filteredEvents = allEvents.filter(item => {
+                const matchRoom = selectedRoom === '' || String(item.room_id) === selectedRoom;
+                const matchDate = selectedDate === '' || String(item.date || '').slice(0, 10) === selectedDate;
                 return matchRoom && matchDate;
             });
+            const eventsByDate = new Map();
 
-            container.innerHTML = '';
+            monthLabel.textContent = calendarViewDate.toLocaleDateString('id-ID', {
+                month: 'long',
+                year: 'numeric'
+            });
+            emptyMessage.hidden = filteredEvents.length > 0;
+            emptyMessage.textContent = selectedDate
+                ? 'Tidak ada agenda pada tanggal dan filter ruangan yang dipilih.'
+                : 'Belum ada agenda untuk bulan ini dan filter ruangan yang dipilih.';
 
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="card" style="grid-column: 1/-1; text-align:center;"><p style="color:var(--text-muted);">Tidak ada agenda terdaftar pada kriteria ini.</p></div>';
-                return;
+            filteredEvents.forEach(item => {
+                const eventDate = String(item.date || '').slice(0, 10);
+                if (!eventsByDate.has(eventDate)) {
+                    eventsByDate.set(eventDate, []);
+                }
+                eventsByDate.get(eventDate).push(item);
+            });
+
+            const firstCalendarDate = new Date(year, month, 1 - firstDay.getDay());
+            const days = [];
+            for (let index = 0; index < totalDays; index++) {
+                const date = new Date(firstCalendarDate);
+                date.setDate(firstCalendarDate.getDate() + index);
+                const dateKey = calendarDateKey(date);
+                const dayEvents = eventsByDate.get(dateKey) || [];
+                const eventMarkup = dayEvents.slice(0, 3).map(item => {
+                    const startTime = String(item.start_time || '').slice(0, 5);
+                    const endTime = String(item.end_time || '').slice(0, 5);
+                    const roomName = item.room?.room_name || `Ruang ${item.room_id}`;
+                    const organizer = item.user?.fullname || 'Guru/Organisasi';
+                    const eventDetails = `${startTime}–${endTime} WIB · ${roomName} · ${organizer}`;
+
+                    return `
+                        <div class="calendar-event" title="${escapeCalendarText(`${item.event_name} — ${eventDetails}`)}">
+                            <strong>${escapeCalendarText(item.event_name || 'Agenda')}</strong>
+                            <span>${escapeCalendarText(`${startTime}–${endTime} · ${roomName}`)}</span>
+                        </div>`;
+                }).join('');
+                const moreEvents = dayEvents.length > 3
+                    ? `<div class="calendar-event-more">+${dayEvents.length - 3} agenda lainnya</div>`
+                    : '';
+
+                days.push(`
+                    <div class="calendar-day${date.getMonth() !== month ? ' is-other-month' : ''}${dateKey === todayKey ? ' is-today' : ''}">
+                        <div class="calendar-day-number">${date.getDate()}</div>
+                        <div class="calendar-event-list">${eventMarkup}${moreEvents}</div>
+                    </div>`);
             }
 
-            filtered.forEach(item => {
-                container.innerHTML += `
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <span class="badge badge-success">${item.room ? item.room.room_name : 'Ruang ID: ' + item.room_id}</span>
-                    <small style="color:var(--text-muted); font-weight:600;">${item.date}</small>
-                </div>
-                <h4 style="font-size:16px; margin-bottom:8px; color:var(--secondary);">${item.event_name}</h4>
-                <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
-                     <b>${item.start_time.substring(0, 5)} - ${item.end_time.substring(0, 5)} WIB</b>
-                </p>
-                <p style="font-size:12px; color:var(--text-main); border-top:1px solid var(--border-color); padding-top:8px;">
-                    Penyelenggara: <b>${item.user ? item.user.fullname : 'Guru/Organisasi'}</b>
-                </p>
-            </div>
-        `;
-            });
+            container.innerHTML = days.join('');
         }
 
         initCalendar();

@@ -557,11 +557,11 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Waktu Mulai</label>
-                                    <input type="time" id="start_time" required>
+                                    <input type="time" id="start_time" step="60" required>
                                 </div>
                                 <div class="form-group">
                                     <label>Waktu Selesai</label>
-                                    <input type="time" id="end_time" required>
+                                    <input type="time" id="end_time" step="60" required>
                                 </div>
                             </div>
 
