@@ -2047,9 +2047,14 @@
                 let rows = '';
                 complaints.forEach(c => {
                     // 1. Badge Status Perbaikan
-                    let badge = c.status_repair === 'Sudah Diperbaiki'
-                        ? '<span class="badge badge-success" style="background:#28a745; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Selesai Diperbaiki</span>'
-                        : '<span class="badge badge-danger" style="background:#dc3545; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Belum Diperbaiki</span>';
+                    let badge;
+                    if (c.status_repair === 'Sudah Diperbaiki') {
+                        badge = '<span class="badge badge-success" style="background:#28a745; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Sudah Diperbaiki</span>';
+                    } else if (c.status_repair === 'Menunggu Spare Part') {
+                        badge = '<span class="badge" style="background:#ffc107; color:#212529; padding:4px 8px; border-radius:4px; font-size:12px;">Menunggu Spare Part</span>';
+                    } else {
+                        badge = '<span class="badge badge-danger" style="background:#dc3545; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">Belum Diperbaiki</span>';
+                    }
 
                     let repairPhoto = c.repair_photo_path
                         ? `<a href="/storage/${encodeURIComponent(c.repair_photo_path).replace(/%2F/g, '/')}" target="_blank" rel="noopener noreferrer">
