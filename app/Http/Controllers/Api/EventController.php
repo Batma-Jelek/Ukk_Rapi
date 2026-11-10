@@ -21,7 +21,24 @@ class EventController extends Controller
         return response()->json([
             'success' => true,
             'data' => $events
-        ], 200);
+        ], 200)->header('Cache-Control', 'no-store, private');
+    }
+
+    /**
+     * Menampilkan riwayat pengajuan milik pengguna yang sedang masuk.
+     */
+    public function myEvents(Request $request)
+    {
+        $events = Event::with('room')
+            ->where('user_id', $request->user()->id)
+            ->orderByDesc('date')
+            ->orderByDesc('start_time')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $events,
+        ], 200)->header('Cache-Control', 'no-store, private');
     }
 
     /**

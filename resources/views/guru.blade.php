@@ -378,6 +378,146 @@
             margin-bottom: 20px;
         }
 
+        .booking-history-card {
+            margin-top: 24px;
+            padding: 24px;
+        }
+
+        .booking-history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .booking-history-header h3 {
+            margin: 0 0 6px;
+            color: #0f172a;
+            font-size: 20px;
+            line-height: 1.4;
+        }
+
+        .booking-history-header p {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .booking-history-header > .booking-history-refresh {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: auto;
+            min-height: 44px;
+            max-width: max-content;
+            padding: 10px 18px;
+            white-space: nowrap;
+            flex: 0 0 auto;
+        }
+
+        .booking-history-scroll {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .booking-history-table {
+            width: 100%;
+            min-width: 760px;
+            border-collapse: separate;
+            border-spacing: 0;
+            text-align: left;
+        }
+
+        .booking-history-table th {
+            padding: 14px 18px;
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        .booking-history-table td {
+            padding: 16px 18px;
+            border-top: 1px solid #e2e8f0;
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.5;
+            vertical-align: middle;
+        }
+
+        .booking-history-table tbody tr {
+            background: #fff;
+            transition: background-color 0.15s ease;
+        }
+
+        .booking-history-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .booking-history-table td:first-child {
+            min-width: 190px;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .booking-history-table td:nth-child(2) {
+            min-width: 170px;
+        }
+
+        .booking-history-table td:nth-child(3),
+        .booking-history-table td:nth-child(4),
+        .booking-history-table td:nth-child(5) {
+            white-space: nowrap;
+        }
+
+        .booking-status {
+            display: inline-flex;
+            align-items: center;
+            min-height: 32px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .booking-history-empty {
+            padding: 24px 18px !important;
+            color: #64748b !important;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .booking-history-card {
+                padding: 18px 14px;
+            }
+
+            .booking-history-header {
+                align-items: stretch;
+            }
+
+            .booking-history-header > .booking-history-refresh {
+                width: auto;
+                align-self: flex-start;
+            }
+
+            .booking-history-scroll::after {
+                content: 'Geser tabel ke samping untuk melihat semua kolom';
+                display: block;
+                padding: 9px 12px;
+                border-top: 1px solid #e2e8f0;
+                color: #64748b;
+                font-size: 12px;
+                text-align: center;
+            }
+        }
+
         .form-group {
             display: flex;
             flex-direction: column;
@@ -596,6 +736,31 @@
 
                             <button type="submit" class="btn-warning">Kirim Laporan Kerusakan</button>
                         </form>
+                    </div>
+                </div>
+                <div class="card booking-history-card">
+                    <div class="booking-history-header">
+                        <div>
+                            <h3>Riwayat Peminjaman Ruangan</h3>
+                            <p>Pantau pengajuan dan status persetujuannya. Daftar diperbarui otomatis.</p>
+                        </div>
+                        <button type="button" class="btn-primary booking-history-refresh" onclick="loadMyBookings()">Muat Ulang</button>
+                    </div>
+                    <div class="booking-history-scroll">
+                        <table class="booking-history-table">
+                            <thead>
+                                <tr>
+                                    <th>Kegiatan</th>
+                                    <th>Ruangan</th>
+                                    <th>Tanggal</th>
+                                    <th>Waktu</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="myBookingsBody">
+                                <tr><td colspan="5" class="booking-history-empty">Memuat riwayat peminjaman...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -824,6 +989,102 @@
         updateEventDateMinimum();
         eventDateInput?.addEventListener('focus', updateEventDateMinimum);
 
+        function escapeBookingText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            })[character]);
+        }
+
+        function bookingStatus(status) {
+            const statuses = {
+                pending: ['Menunggu Persetujuan', '#fef3c7', '#92400e'],
+                approved: ['Disetujui', '#dcfce7', '#166534'],
+                rejected: ['Ditolak', '#fee2e2', '#991b1b'],
+                moved: ['Ruangan Dipindahkan', '#e0f2fe', '#075985']
+            };
+            return statuses[String(status || '').toLowerCase()] || ['Status tidak diketahui', '#e2e8f0', '#334155'];
+        }
+
+        function formatBookingDate(value) {
+            const [year, month, day] = String(value || '').slice(0, 10).split('-').map(Number);
+            return year && month && day
+                ? new Date(year, month - 1, day).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                })
+                : 'Tanggal tidak tersedia';
+        }
+
+        let myBookingsData = [];
+        let myBookingsRequestVersion = 0;
+        const recentlySubmittedBookings = new Map();
+
+        function renderMyBookings(bookings) {
+            const tableBody = document.getElementById('myBookingsBody');
+            if (bookings.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="booking-history-empty">Belum ada pengajuan peminjaman ruangan.</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = bookings.map(booking => {
+                const [label, background, color] = bookingStatus(booking.status);
+                return `
+                    <tr>
+                        <td>${escapeBookingText(booking.event_name || '-')}</td>
+                        <td>${escapeBookingText(booking.room?.room_name || `Ruangan ${booking.room_id}`)}</td>
+                        <td>${escapeBookingText(formatBookingDate(booking.date))}</td>
+                        <td>${escapeBookingText(`${String(booking.start_time || '').slice(0, 5)}–${String(booking.end_time || '').slice(0, 5)} WIB`)}</td>
+                        <td><span class="booking-status" style="background:${background}; color:${color};">${label}</span></td>
+                    </tr>`;
+            }).join('');
+        }
+
+        async function loadMyBookings() {
+            const requestVersion = ++myBookingsRequestVersion;
+            const tableBody = document.getElementById('myBookingsBody');
+
+            try {
+                const response = await fetch('/api/my-events', {
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || 'Riwayat peminjaman gagal dimuat.');
+                }
+
+                if (requestVersion !== myBookingsRequestVersion) return;
+                if (!Array.isArray(result.data)) {
+                    throw new Error('Format data riwayat peminjaman tidak valid.');
+                }
+                myBookingsData = result.data;
+                const serverBookingIds = new Set(myBookingsData.map(booking => String(booking.id)));
+                recentlySubmittedBookings.forEach((booking, id) => {
+                    if (!serverBookingIds.has(id)) myBookingsData.push(booking);
+                });
+                renderMyBookings(myBookingsData);
+            } catch (error) {
+                if (requestVersion !== myBookingsRequestVersion) return;
+                if (myBookingsData.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="booking-history-empty" style="color:#991b1b !important;">${escapeBookingText(error.message || 'Riwayat peminjaman gagal dimuat.')}</td></tr>`;
+                }
+                console.error('Gagal memperbarui riwayat peminjaman:', error);
+            }
+        }
+
+        setInterval(() => {
+            if (document.visibilityState === 'visible') loadMyBookings();
+        }, 30000);
+
         // 2. Submit Handler: Form Pengajuan
         document.getElementById('eventForm')?.addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -856,7 +1117,16 @@
 
                 if (res.ok) {
                     alert('Pengajuan agenda berhasil dikirim! Menunggu persetujuan Waka/Admin.');
+                    if (result.data?.id) {
+                        recentlySubmittedBookings.set(String(result.data.id), result.data);
+                        myBookingsData = [
+                            result.data,
+                            ...myBookingsData.filter(booking => String(booking.id) !== String(result.data.id))
+                        ];
+                        renderMyBookings(myBookingsData);
+                    }
                     document.getElementById('eventForm').reset();
+                    await loadMyBookings();
                 } else {
                     alert(result.message || 'Gagal mengajukan agenda ruangan.');
                 }
@@ -1169,6 +1439,7 @@
         // Inisialisasi awal
         document.addEventListener('DOMContentLoaded', () => {
             loadRoomOptions();
+            loadMyBookings();
         });
     </script>
 

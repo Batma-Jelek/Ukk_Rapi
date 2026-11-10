@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Guru (Role 3), Organisasi (Role 4) & Admin (Role 1): Pengajuan & Daftar Agenda
     Route::get('/events', [EventController::class, 'index']);
+    Route::get('/my-events', [EventController::class, 'myEvents']);
     Route::post('/events', [EventController::class, 'store']);
 
     // Admin (Role 1): Persetujuan, Penolakan & Hak Veto Pindah Ruang Agenda

@@ -503,6 +503,19 @@
             border-right: 1px solid #e2e8f0;
             border-bottom: 1px solid #e2e8f0;
             background: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .calendar-day:hover {
+            background: #f0f9ff;
+        }
+
+        .calendar-day:focus-visible {
+            position: relative;
+            z-index: 1;
+            outline: 3px solid #0284c7;
+            outline-offset: -3px;
         }
 
         .calendar-day:nth-child(7n) {
@@ -589,6 +602,110 @@
 
         .calendar-empty-message[hidden] {
             display: none;
+        }
+
+        .calendar-event-modal[hidden] {
+            display: none;
+        }
+
+        .calendar-event-modal {
+            position: fixed;
+            z-index: 1200;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.58);
+        }
+
+        .calendar-event-dialog {
+            width: min(100%, 640px);
+            max-height: min(82vh, 720px);
+            overflow: hidden;
+            border: 1px solid #dbe3ee;
+            border-radius: 14px;
+            background: #ffffff;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.24);
+        }
+
+        .calendar-event-dialog-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .calendar-event-dialog-header h3 {
+            color: #0f172a;
+            font-size: 19px;
+        }
+
+        .calendar-event-dialog-header p {
+            margin-top: 4px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        .calendar-event-modal-close {
+            display: grid;
+            width: 40px;
+            height: 40px;
+            flex: 0 0 40px;
+            place-items: center;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #334155;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .calendar-event-modal-close:hover {
+            border-color: #0284c7;
+            color: #0369a1;
+        }
+
+        .calendar-event-modal-list {
+            max-height: calc(min(82vh, 720px) - 90px);
+            overflow-y: auto;
+            padding: 16px 20px 20px;
+        }
+
+        .calendar-event-modal-item {
+            margin-bottom: 12px;
+            padding: 14px;
+            border: 1px solid #dbe3ee;
+            border-left: 4px solid #0284c7;
+            border-radius: 9px;
+            background: #ffffff;
+        }
+
+        .calendar-event-modal-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .calendar-event-modal-item h4 {
+            margin-bottom: 8px;
+            color: #0f172a;
+            font-size: 16px;
+        }
+
+        .calendar-event-modal-item p {
+            margin-top: 4px;
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .calendar-event-modal-message {
+            padding: 20px 4px;
+            color: #475569;
+            text-align: center;
         }
 
         @media (max-width: 480px) {
@@ -833,6 +950,16 @@
                 flex: 1;
             }
 
+            .calendar-event-modal {
+                padding: 12px;
+            }
+
+            .calendar-event-dialog-header,
+            .calendar-event-modal-list {
+                padding-right: 16px;
+                padding-left: 16px;
+            }
+
             .grid-cards {
                 grid-template-columns: minmax(0, 1fr);
             }
@@ -931,7 +1058,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"></path>
-                        </svg>Laporan Harian/Mingguan/Bulanan
+                        </svg>Laporan
                     </a>
 
                     <!-- Menu Baru: Manajemen Akun -->
@@ -1109,6 +1236,21 @@
                         <p>Memuat jadwal kalender...</p>
                     </div>
                 </div>
+                <div id="calendarEventModal" class="calendar-event-modal" role="presentation" hidden
+                    onclick="if (event.target === this) closeCalendarEventModal()">
+                    <section class="calendar-event-dialog" role="dialog" aria-modal="true"
+                        aria-labelledby="calendarEventModalTitle" aria-describedby="calendarEventModalDate" tabindex="-1">
+                        <header class="calendar-event-dialog-header">
+                            <div>
+                                <h3 id="calendarEventModalTitle">Agenda pada tanggal ini</h3>
+                                <p id="calendarEventModalDate"></p>
+                            </div>
+                            <button type="button" class="calendar-event-modal-close"
+                                onclick="closeCalendarEventModal()" aria-label="Tutup pop-up">&times;</button>
+                        </header>
+                        <div id="calendarEventModalList" class="calendar-event-modal-list" aria-live="polite"></div>
+                    </section>
+                </div>
             </div>
             <div id="peminjamanTab" class="section-tab">
                 <div class="card">
@@ -1144,6 +1286,31 @@
 
                         <button type="submit" class="btn-primary">Kirim Pengajuan Agenda</button>
                     </form>
+                </div>
+                <div class="card" style="margin-top:24px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+                        <div>
+                            <h3 style="margin-bottom:4px;">Riwayat Peminjaman Saya</h3>
+                            <p style="color:#64748b; font-size:13px;">Daftar ruangan yang Anda ajukan beserta statusnya.</p>
+                        </div>
+                        <button type="button" class="btn-primary" style="width:auto;" onclick="loadMyBookings()">Muat Ulang</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Kegiatan</th>
+                                    <th>Ruangan</th>
+                                    <th>Tanggal</th>
+                                    <th>Waktu</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="myBookingsBody">
+                                <tr><td colspan="5" style="text-align:center; color:#64748b;">Memuat riwayat peminjaman...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -2087,16 +2254,28 @@
         });
 
         // 1. Load Data Agenda (Toleran Case-Sensitivity)
+        let eventsRequestVersion = 0;
+
         async function loadEvents() {
+            const requestVersion = ++eventsRequestVersion;
             try {
                 const response = await fetch('/api/events', {
+                    cache: 'no-store',
                     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
                 });
                 const result = await response.json();
-                const events = Array.isArray(result) ? result : (result.data || []);
                 const tableBody = document.getElementById('eventsTableBody');
+                if (!response.ok) {
+                    throw new Error(result.message || 'Gagal mengambil daftar pengajuan.');
+                }
+                if (requestVersion !== eventsRequestVersion) return;
 
-                if (!events || events.length === 0) {
+                const events = Array.isArray(result) ? result : result.data;
+                if (!Array.isArray(events)) {
+                    throw new Error('Format data pengajuan agenda tidak valid.');
+                }
+
+                if (events.length === 0) {
                     tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 16px;">Belum ada pengajuan.</td></tr>`;
                     return;
                 }
@@ -2135,7 +2314,9 @@
                 });
                 tableBody.innerHTML = rows;
             } catch (error) {
-                document.getElementById('eventsTableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 16px;">Gagal memuat data pengajuan agenda.</td></tr>`;
+                if (requestVersion !== eventsRequestVersion) return;
+                console.error('Gagal memuat pengajuan agenda:', error);
+                document.getElementById('eventsTableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 16px;">${error.message || 'Gagal memuat data pengajuan agenda.'}</td></tr>`;
             }
         }
 
@@ -2604,8 +2785,16 @@
             loadRooms();
             loadPicUsers();
             loadComplaints();
+            loadMyBookings();
         });
 
+        setInterval(() => {
+            if (document.visibilityState === 'visible') loadEvents();
+        }, 30000);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') loadEvents();
+        });
 
 
 
@@ -2613,6 +2802,7 @@
         let allEvents = [];
         let calendarViewDate = new Date();
         calendarViewDate.setDate(1);
+        let lastFocusedCalendarDay = null;
 
         function escapeCalendarText(value) {
             return String(value ?? '').replace(/[&<>"']/g, character => ({
@@ -2624,6 +2814,75 @@
             })[character]);
         }
 
+        function bookingStatus(status) {
+            const statuses = {
+                pending: ['Menunggu Persetujuan', '#fef3c7', '#92400e'],
+                approved: ['Disetujui', '#dcfce7', '#166534'],
+                rejected: ['Ditolak', '#fee2e2', '#991b1b'],
+                moved: ['Ruangan Dipindahkan', '#e0f2fe', '#075985']
+            };
+            return statuses[String(status || '').toLowerCase()] || ['Status tidak diketahui', '#e2e8f0', '#334155'];
+        }
+
+        function formatBookingDate(value) {
+            const [year, month, day] = String(value || '').slice(0, 10).split('-').map(Number);
+            return year && month && day
+                ? new Date(year, month - 1, day).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                })
+                : 'Tanggal tidak tersedia';
+        }
+
+        async function loadMyBookings() {
+            const tableBody = document.getElementById('myBookingsBody');
+            if (!tableBody) return;
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b;">Memuat riwayat peminjaman...</td></tr>';
+
+            try {
+                const response = await fetch('/api/my-events', {
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache',
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || 'Riwayat peminjaman gagal dimuat.');
+                }
+
+                if (!Array.isArray(result.data)) {
+                    throw new Error('Format data riwayat peminjaman tidak valid.');
+                }
+                const bookings = result.data;
+                if (bookings.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b;">Belum ada pengajuan peminjaman ruangan.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = bookings.map(booking => {
+                    const [label, background, color] = bookingStatus(booking.status);
+                    return `
+                        <tr>
+                            <td>${escapeCalendarText(booking.event_name || '-')}</td>
+                            <td>${escapeCalendarText(booking.room?.room_name || `Ruangan ${booking.room_id}`)}</td>
+                            <td>${escapeCalendarText(formatBookingDate(booking.date))}</td>
+                            <td>${escapeCalendarText(`${String(booking.start_time || '').slice(0, 5)}–${String(booking.end_time || '').slice(0, 5)} WIB`)}</td>
+                            <td><span style="display:inline-block; padding:5px 10px; border-radius:999px; background:${background}; color:${color}; font-weight:600;">${label}</span></td>
+                        </tr>`;
+                }).join('');
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#991b1b;">${escapeCalendarText(error.message || 'Riwayat peminjaman gagal dimuat.')}</td></tr>`;
+            }
+        }
+
+        setInterval(() => {
+            if (document.visibilityState === 'visible') loadMyBookings();
+        }, 30000);
+
         function calendarDateKey(date) {
             return [
                 date.getFullYear(),
@@ -2631,6 +2890,69 @@
                 String(date.getDate()).padStart(2, '0')
             ].join('-');
         }
+
+        function formatCalendarDate(dateKey) {
+            const [year, month, day] = dateKey.split('-').map(Number);
+            return new Date(year, month - 1, day).toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+
+        function openCalendarEventModal(dateKey, trigger) {
+            const modal = document.getElementById('calendarEventModal');
+            const list = document.getElementById('calendarEventModalList');
+            const selectedRoom = document.getElementById('filterRoom').value;
+            const events = allEvents
+                .filter(item => {
+                    const sameDate = String(item.date || '').slice(0, 10) === dateKey;
+                    const sameRoom = selectedRoom === '' || String(item.room_id) === selectedRoom;
+                    return sameDate && sameRoom;
+                })
+                .sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')));
+
+            lastFocusedCalendarDay = trigger || document.activeElement;
+            document.getElementById('calendarEventModalDate').textContent = formatCalendarDate(dateKey);
+            modal.hidden = false;
+            modal.querySelector('.calendar-event-modal-close').focus();
+
+            if (events.length === 0) {
+                list.innerHTML = '<p class="calendar-event-modal-message">Tidak ada agenda pada tanggal ini.</p>';
+                return;
+            }
+
+            list.innerHTML = events.map(item => {
+                const roomName = item.room?.room_name || `Ruang ${item.room_id}`;
+                const startTime = String(item.start_time || '').slice(0, 5) || '--:--';
+                const endTime = String(item.end_time || '').slice(0, 5) || '--:--';
+                const organizer = item.user?.fullname || 'Guru/Organisasi';
+
+                return `
+                    <article class="calendar-event-modal-item">
+                        <h4>${escapeCalendarText(item.event_name || 'Agenda tanpa judul')}</h4>
+                        <p><strong>Waktu:</strong> ${escapeCalendarText(`${startTime}–${endTime} WIB`)}</p>
+                        <p><strong>Ruangan:</strong> ${escapeCalendarText(roomName)}</p>
+                        <p><strong>Penyelenggara:</strong> ${escapeCalendarText(organizer)}</p>
+                    </article>`;
+            }).join('');
+        }
+
+        function closeCalendarEventModal() {
+            const modal = document.getElementById('calendarEventModal');
+            if (modal.hidden) return;
+            modal.hidden = true;
+            if (lastFocusedCalendarDay && document.contains(lastFocusedCalendarDay)) {
+                lastFocusedCalendarDay.focus();
+            }
+        }
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                closeCalendarEventModal();
+            }
+        });
 
         function selectCalendarDate() {
             const selectedDate = document.getElementById('filterDate').value;
@@ -2746,7 +3068,11 @@
                     : '';
 
                 days.push(`
-                    <div class="calendar-day${date.getMonth() !== month ? ' is-other-month' : ''}${dateKey === todayKey ? ' is-today' : ''}">
+                    <div class="calendar-day${date.getMonth() !== month ? ' is-other-month' : ''}${dateKey === todayKey ? ' is-today' : ''}"
+                        role="button" tabindex="0" aria-haspopup="dialog"
+                        aria-label="Lihat agenda ${escapeCalendarText(formatCalendarDate(dateKey))}"
+                        onclick="openCalendarEventModal('${dateKey}', this)"
+                        onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openCalendarEventModal('${dateKey}', this); }">
                         <div class="calendar-day-number">${date.getDate()}</div>
                         <div class="calendar-event-list">${eventMarkup}${moreEvents}</div>
                     </div>`);
@@ -2806,6 +3132,7 @@
                 if (res.ok) {
                     alert('Pengajuan agenda berhasil dikirim');
                     document.getElementById('eventForm').reset();
+                    await loadMyBookings();
                 } else {
                     alert(result.message || 'Gagal mengajukan agenda ruangan.');
                 }
