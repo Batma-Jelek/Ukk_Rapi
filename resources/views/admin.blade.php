@@ -1334,8 +1334,8 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Foto Bukti Kerusakan (Opsional)</label>
-                            <input type="file" name="photo" id="photo" accept="image/*" capture="environment">
+                            <label>Foto Bukti Kerusakan (PNG/JPG)</label>
+                            <input type="file" name="photo" id="photo" accept=".png,.jpg,.jpeg,image/png,image/jpeg" capture="environment">
                         </div>
 
                         <input type="hidden" name="photo_base64" id="input_photo_base64">

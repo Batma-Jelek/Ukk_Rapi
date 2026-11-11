@@ -81,8 +81,8 @@ class ComplaintController extends Controller
             $validator = Validator::make($request->all(), [
                 'room_id' => 'required|exists:rooms,id',
                 'description' => 'required|string|min:3',
-                'photo' => 'nullable|file|max:10240', // Maksimal 10MB
-                'photo_base64' => 'nullable|string',   // Alternatif Base64
+                'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:10240'],
+                'photo_base64' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -94,37 +94,52 @@ class ComplaintController extends Controller
 
             // 3. Olah file foto
             $photoPath = null;
+            $base64PhotoData = null;
+            $base64PhotoExtension = null;
+
+            if ($request->filled('photo_base64')) {
+                $base64Image = $request->input('photo_base64');
+                $maxBase64Length = (int) ceil(10 * 1024 * 1024 * 4 / 3);
+
+                if (
+                    strlen($base64Image) > $maxBase64Length + 64 ||
+                    !preg_match('/\Adata:image\/(png|jpeg);base64,([A-Za-z0-9+\/=]+)\z/', $base64Image, $matches)
+                ) {
+                    return response()->json([
+                        'status' => 'error',
+                        'errors' => ['photo_base64' => ['Foto harus berformat PNG atau JPG dan berukuran maksimal 10MB.']],
+                    ], 422);
+                }
+
+                $base64PhotoData = base64_decode($matches[2], true);
+                $imageInfo = $base64PhotoData !== false ? getimagesizefromstring($base64PhotoData) : false;
+                $expectedImageType = $matches[1] === 'png' ? IMAGETYPE_PNG : IMAGETYPE_JPEG;
+
+                if (
+                    $base64PhotoData === false ||
+                    strlen($base64PhotoData) > 10 * 1024 * 1024 ||
+                    $imageInfo === false ||
+                    $imageInfo[2] !== $expectedImageType
+                ) {
+                    return response()->json([
+                        'status' => 'error',
+                        'errors' => ['photo_base64' => ['Foto harus berupa gambar PNG atau JPG yang valid dan berukuran maksimal 10MB.']],
+                    ], 422);
+                }
+
+                $base64PhotoExtension = $matches[1] === 'jpeg' ? 'jpg' : 'png';
+            }
 
             // A. Opsi Upload File Biasa / Multipart
             if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
                 $photoPath = $request->file('photo')->store('complaints', 'public');
             }
-           // B. Opsi Base64 (Webcam)
-        else if ($request->filled('photo_base64')) {
-            $base64Image = $request->photo_base64;
-
-            // Ambil ekstensi gambar jika ada header data URI
-            $extension = 'jpg';
-            if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
-                $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
-                $extension = strtolower($type[1]);
-            }
-
-            // Clean & Decode Base64 Data
-            $base64Image = str_replace(' ', '+', $base64Image);
-            $imageData = base64_decode($base64Image);
-
-            if ($imageData !== false) {
-                // Pastikan folder complaints dibuat jika belum ada
-                if (!\Illuminate\Support\Facades\Storage::disk('public')->exists('complaints')) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('complaints');
-                }
-
-                $fileName = 'complaints/photo_' . time() . '_' . uniqid() . '.' . $extension;
-                \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $imageData);
+            // B. Opsi Base64 (Webcam)
+            elseif ($base64PhotoData !== null) {
+                $fileName = 'complaints/photo_' . time() . '_' . uniqid() . '.' . $base64PhotoExtension;
+                Storage::disk('public')->put($fileName, $base64PhotoData);
                 $photoPath = $fileName;
             }
-        }
 
             // 4. Simpan data laporan ke Database
             $complaint = Complaint::create([
@@ -174,7 +189,7 @@ class ComplaintController extends Controller
         ];
 
         if ((int) $user->role_id === 2) {
-            $rules['photo'] = 'required|image|max:10240';
+            $rules['photo'] = ['required', 'image', 'mimes:jpg,jpeg,png', 'max:10240'];
         }
 
         $validator = Validator::make($request->all(), $rules);

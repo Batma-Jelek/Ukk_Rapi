@@ -861,8 +861,8 @@
                                     <option value="Menunggu Spare Part" ${item.status_repair === 'Menunggu Spare Part' ? 'selected' : ''}>Menunggu Spare Part</option>
                                     <option value="Sudah Diperbaiki" ${item.status_repair === 'Sudah Diperbaiki' ? 'selected' : ''}>Sudah Diperbaiki</option>
                                 </select>
-                                <label for="repairPhoto_${item.id}" style="display:block; margin-top:12px;">Foto Bukti Perbaikan (wajib):</label>
-                                <input type="file" id="repairPhoto_${item.id}" class="form-control" accept="image/*" required>
+                                <label for="repairPhoto_${item.id}" style="display:block; margin-top:12px;">Foto Bukti Perbaikan (wajib, PNG/JPG):</label>
+                                <input type="file" id="repairPhoto_${item.id}" class="form-control" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required>
                                 <button type="button" id="saveButton_${item.id}" class="btn btn-primary"
                                     style="margin-top:12px;"
                                     onclick="updateRepairStatus(${Number(item.id)})">Simpan Status &amp; Foto Bukti</button>

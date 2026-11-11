@@ -159,6 +159,18 @@ test('pic must upload repair evidence to update status and waka can see the evid
         ->assertJsonValidationErrors('photo');
 
     Storage::fake('public');
+    $gif = UploadedFile::fake()->createWithContent(
+        'bukti-perbaikan.gif',
+        base64_decode('R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=')
+    );
+    $this->post("/api/complaints/{$complaint->id}/status", [
+        '_method' => 'PATCH',
+        'status_repair' => 'Menunggu Spare Part',
+        'photo' => $gif,
+    ], ['Accept' => 'application/json'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('photo');
+
     $updateResponse = $this->post("/api/complaints/{$complaint->id}/status", [
         '_method' => 'PATCH',
         'status_repair' => 'Menunggu Spare Part',
@@ -173,11 +185,18 @@ test('pic must upload repair evidence to update status and waka can see the evid
     expect($repairPhotoPath)->toStartWith('complaint-repairs/');
     Storage::disk('public')->assertExists($repairPhotoPath);
 
+    $pngResponse = $this->post("/api/complaints/{$complaint->id}/status", [
+        '_method' => 'PATCH',
+        'status_repair' => 'Menunggu Spare Part',
+        'photo' => UploadedFile::fake()->image('bukti-perbaikan.png'),
+    ], ['Accept' => 'application/json']);
+    $pngResponse->assertOk();
+
     $this->assertDatabaseHas('complaints', [
         'id' => $complaint->id,
         'status_repair' => 'Menunggu Spare Part',
         'handler_id' => $pic->id,
-        'repair_photo_path' => $repairPhotoPath,
+        'repair_photo_path' => $pngResponse->json('data.repair_photo_path'),
     ]);
 
     Sanctum::actingAs($waka);
@@ -185,7 +204,44 @@ test('pic must upload repair evidence to update status and waka can see the evid
     $this->getJson('/api/complaints')
         ->assertOk()
         ->assertJsonPath('data.0.status_repair', 'Menunggu Spare Part')
-        ->assertJsonPath('data.0.repair_photo_path', $repairPhotoPath);
+        ->assertJsonPath('data.0.repair_photo_path', $pngResponse->json('data.repair_photo_path'));
+});
+
+test('complaint uploads only accept PNG or JPG base64 images', function () {
+    $teacherRole = Role::create(['role_name' => 'Guru']);
+    $teacher = User::create([
+        'username' => 'teacher',
+        'password' => 'password',
+        'fullname' => 'Guru',
+        'phone_number' => '0822222222',
+        'role_id' => $teacherRole->id,
+    ]);
+
+    $room = Room::create([
+        'room_name' => 'Lab Komputer',
+        'capacity' => 30,
+        'location' => 'Lantai 1',
+    ]);
+
+    Sanctum::actingAs($teacher);
+    Storage::fake('public');
+
+    $this->postJson('/api/complaints', [
+        'room_id' => $room->id,
+        'description' => 'Komputer tidak menyala',
+        'photo_base64' => 'data:image/jpeg;base64,' . base64_encode('GIF89a'),
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors('photo_base64');
+
+    $png = UploadedFile::fake()->image('laporan.png');
+    $response = $this->postJson('/api/complaints', [
+        'room_id' => $room->id,
+        'description' => 'Komputer tidak menyala',
+        'photo_base64' => 'data:image/png;base64,' . base64_encode(file_get_contents($png->getPathname())),
+    ]);
+
+    $response->assertCreated();
+    Storage::disk('public')->assertExists($response->json('data.photo_path'));
 });
 
 test('pic cannot update a complaint for a room they do not manage', function () {
