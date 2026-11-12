@@ -879,6 +879,37 @@
             }
         }
 
+        async function isAllowedRepairPhoto(file) {
+            if (!file || !/\.(png|jpe?g)$/i.test(file.name)) return false;
+            if (file.type && !['image/png', 'image/jpeg', 'image/jpg'].includes(file.type.toLowerCase())) return false;
+
+            try {
+                const signature = new Uint8Array(await file.slice(0, 8).arrayBuffer());
+                const isPng = signature.length >= 8 &&
+                    signature[0] === 0x89 && signature[1] === 0x50 &&
+                    signature[2] === 0x4e && signature[3] === 0x47 &&
+                    signature[4] === 0x0d && signature[5] === 0x0a &&
+                    signature[6] === 0x1a && signature[7] === 0x0a;
+                const isJpeg = signature.length >= 3 &&
+                    signature[0] === 0xff && signature[1] === 0xd8 && signature[2] === 0xff;
+
+                return isPng || isJpeg;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        document.addEventListener('change', async event => {
+            const photoInput = event.target;
+            if (!(photoInput instanceof HTMLInputElement) || !photoInput.id.startsWith('repairPhoto_')) return;
+
+            const photoFile = photoInput.files?.[0];
+            if (photoFile && !(await isAllowedRepairPhoto(photoFile))) {
+                photoInput.value = '';
+                showMessage('Sistem foto harus berformat PNG atau JPG.', true);
+            }
+        });
+
         async function updateRepairStatus(id) {
             const photoInput = document.getElementById(`repairPhoto_${id}`);
             const saveButton = document.getElementById(`saveButton_${id}`);
@@ -888,10 +919,18 @@
                 return;
             }
 
+            const photoFile = photoInput.files[0];
+            if (!(await isAllowedRepairPhoto(photoFile))) {
+                photoInput.value = '';
+                showMessage('Sistem foto harus berformat PNG atau JPG.', true);
+                photoInput.focus();
+                return;
+            }
+
             const formData = new FormData();
             formData.append('_method', 'PATCH');
             formData.append('status_repair', document.getElementById(`repairStatus_${id}`).value);
-            formData.append('photo', photoInput.files[0]);
+            formData.append('photo', photoFile);
             saveButton.disabled = true;
             saveButton.textContent = 'Menyimpan...';
             showMessage('');

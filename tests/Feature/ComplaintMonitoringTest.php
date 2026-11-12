@@ -233,6 +233,18 @@ test('complaint uploads only accept PNG or JPG base64 images', function () {
     ])->assertUnprocessable()
         ->assertJsonValidationErrors('photo_base64');
 
+    $gif = UploadedFile::fake()->createWithContent(
+        'laporan.gif',
+        base64_decode('R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=')
+    );
+    $this->post('/api/complaints', [
+        'room_id' => $room->id,
+        'description' => 'Komputer tidak menyala',
+        'photo' => $gif,
+    ], ['Accept' => 'application/json'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('photo');
+
     $png = UploadedFile::fake()->image('laporan.png');
     $response = $this->postJson('/api/complaints', [
         'room_id' => $room->id,
