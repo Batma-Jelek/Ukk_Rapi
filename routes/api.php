@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\AccountsImportController;
 use App\Http\Controllers\Api\PasswordResetRequestController;
+use App\Http\Controllers\Api\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,4 +65,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::get('/password-reset-requests', [PasswordResetRequestController::class, 'index']);
     Route::patch('/password-reset-requests/{passwordResetRequest}/complete', [PasswordResetRequestController::class, 'complete']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 });

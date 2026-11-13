@@ -547,6 +547,49 @@
             min-height: 80px;
         }
 
+        .notification-toast-container {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1200;
+            display: grid;
+            width: min(380px, calc(100vw - 32px));
+            gap: 10px;
+        }
+
+        .notification-toast {
+            position: relative;
+            padding: 14px 42px 14px 16px;
+            border: 1px solid #bae6fd;
+            border-left: 4px solid #0284c7;
+            border-radius: 10px;
+            background: #fff;
+            color: #0f172a;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+        }
+
+        .notification-toast strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #075985;
+        }
+
+        .notification-toast p {
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .notification-toast button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            border: 0;
+            background: transparent;
+            color: #64748b;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
         .form-row {
             display: flex;
             gap: 16px;
@@ -806,6 +849,9 @@
         </main>
     </div>
 
+    <div id="notificationToastContainer" class="notification-toast-container"
+        role="region" aria-label="Notifikasi" aria-live="polite"></div>
+
     <script>
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user'));
@@ -826,6 +872,67 @@
             .map(part => part.charAt(0))
             .join('')
             .toUpperCase() || 'G';
+
+        function showNotificationToast(notification) {
+            const container = document.getElementById('notificationToastContainer');
+            const toast = document.createElement('article');
+            toast.className = 'notification-toast';
+
+            const title = document.createElement('strong');
+            title.textContent = notification.title || 'Notifikasi';
+            const message = document.createElement('p');
+            message.textContent = notification.message || '';
+            const closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.setAttribute('aria-label', 'Tutup notifikasi');
+            closeButton.textContent = '×';
+            closeButton.addEventListener('click', () => toast.remove());
+
+            toast.append(title, message, closeButton);
+            container.appendChild(toast);
+            window.setTimeout(() => toast.remove(), 10000);
+        }
+
+        let isLoadingNotifications = false;
+        async function loadNotifications() {
+            if (!token || document.visibilityState !== 'visible' || isLoadingNotifications) return;
+            isLoadingNotifications = true;
+
+            try {
+                const response = await fetch('/api/notifications', {
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || 'Notifikasi gagal dimuat.');
+                }
+
+                for (const notification of (Array.isArray(result.data) ? result.data : [])) {
+                    showNotificationToast(notification);
+                    const readResponse = await fetch(`/api/notifications/${notification.id}/read`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        }
+                    });
+                    if (!readResponse.ok) {
+                        throw new Error('Notifikasi gagal ditandai sudah dibaca.');
+                    }
+                }
+            } catch (error) {
+                console.error('Gagal memuat notifikasi:', error);
+            } finally {
+                isLoadingNotifications = false;
+            }
+        }
+
+        setInterval(loadNotifications, 10000);
+        document.addEventListener('visibilitychange', loadNotifications);
 
         function openMobileNav() {
             document.getElementById('mobileSidebar').classList.add('is-open');
@@ -1471,6 +1578,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadRoomOptions();
             loadMyBookings();
+            loadNotifications();
         });
     </script>
 

@@ -72,6 +72,19 @@ test('admin can move an approved event and notify its requester', function () {
     $this->assertDatabaseHas('notifications', [
         'user_id' => $teacher->id,
         'title' => 'Ruangan Dipindahkan oleh Waka',
-        'message' => "Kegiatan 'Rapat Guru' dipindahkan dari Ruang Lama ke Ruang Baru. Alasan: Ruangan lama sedang diperbaiki",
+        'message' => "Acara 'Rapat Guru' dipindahkan ke Ruang Baru dari Ruang Lama. Alasan: Ruangan lama sedang diperbaiki",
     ]);
+
+    Sanctum::actingAs($teacher);
+    $notificationResponse = $this->getJson('/api/notifications');
+    $notificationResponse->assertOk()
+        ->assertJsonPath('data.0.message', "Acara 'Rapat Guru' dipindahkan ke Ruang Baru dari Ruang Lama. Alasan: Ruangan lama sedang diperbaiki");
+
+    $notificationId = $notificationResponse->json('data.0.id');
+    Sanctum::actingAs($admin);
+    $this->patchJson("/api/notifications/{$notificationId}/read")->assertNotFound();
+
+    Sanctum::actingAs($teacher);
+    $this->patchJson("/api/notifications/{$notificationId}/read")->assertOk();
+    $this->getJson('/api/notifications')->assertJsonCount(0, 'data');
 });

@@ -12,6 +12,7 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $notifications = Notification::where('user_id', $request->user()->id)
+            ->where('is_read', false)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -19,9 +20,9 @@ class NotificationController extends Controller
     }
 
     // Tandai notifikasi sudah dibaca
-    public function markAsRead($id)
+    public function markAsRead(Request $request, $id)
     {
-        $notification = Notification::findOrFail($id);
+        $notification = Notification::where('user_id', $request->user()->id)->findOrFail($id);
         $notification->is_read = true;
         $notification->save();
 

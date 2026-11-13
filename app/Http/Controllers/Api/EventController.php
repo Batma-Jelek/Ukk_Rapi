@@ -153,14 +153,14 @@ class EventController extends Controller
             if ($event->user) {
                 $event->user->notifications()->create([
                     'title' => 'Ruangan Dipindahkan oleh Waka',
-                    'message' => "Kegiatan '{$event->event_name}' dipindahkan dari {$oldRoomName} ke {$newRoom->room_name}. Alasan: {$reason}",
+                    'message' => "Acara '{$event->event_name}' dipindahkan ke {$newRoom->room_name} dari {$oldRoomName}. Alasan: {$reason}",
                 ]);
             }
         });
 
         return response()->json([
             'success' => true,
-            'message' => 'Ruangan berhasil dipindahkan sepihak dan notifikasi telah dikirim.',
+            'message' => "Acara '{$event->event_name}' dipindahkan ke {$newRoom->room_name} dan notifikasi telah dikirim.",
             'data' => $event->load('room')
         ], 200);
     }
