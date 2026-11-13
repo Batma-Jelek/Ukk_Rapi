@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\NotificationController;
 */
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/password-reset-requests', [PasswordResetRequestController::class, 'store'])->middleware('throttle:5,1');
+Route::post('/reset-password', [PasswordResetRequestController::class, 'reset'])->middleware('throttle:5,1');
 Route::get('/rooms', [RoomController::class, 'index']);
 Route::get('/calendar', [EventController::class, 'getCalendarEvents']);
 
@@ -64,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::get('/password-reset-requests', [PasswordResetRequestController::class, 'index']);
+    Route::post('/password-reset-requests/{passwordResetRequest}/send-link', [PasswordResetRequestController::class, 'sendLink']);
     Route::patch('/password-reset-requests/{passwordResetRequest}/complete', [PasswordResetRequestController::class, 'complete']);
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);

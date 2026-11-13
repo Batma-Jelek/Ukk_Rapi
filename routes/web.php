@@ -9,6 +9,9 @@ Route::get('/', function () {
 Route::get('/login', function () {
     return view('login');
 });
+Route::get('/reset-password', function () {
+    return view('reset-password');
+})->name('password.reset.form');
 Route::get('/calendar-view', function () {
     return view('calendar');
 });

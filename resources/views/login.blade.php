@@ -87,10 +87,13 @@
         <button type="button" id="closeForgotPasswordModal" class="modal-close" aria-label="Tutup popup">&times;</button>
         <h2 id="forgotPasswordTitle">Form Pengajuan Lupa Sandi</h2>
         <p class="forgot-password-description">
-            Isi data akun yang terdaftar. Pengajuan akan diverifikasi admin sekolah sebelum sandi diatur ulang.
+            Isi data akun yang terdaftar. Jika cocok, WhatsApp akan terbuka dengan tautan ubah sandi. Tekan Kirim di WhatsApp untuk mengirim pesan.
         </p>
         <div id="forgotPasswordError" class="alert-danger" role="alert"></div>
         <div id="forgotPasswordSuccess" class="forgot-password-success" role="status" hidden></div>
+        <a id="forgotPasswordWhatsAppLink" class="btn btn-primary" target="_blank" rel="noopener noreferrer" hidden>
+            Buka WhatsApp
+        </a>
         <form id="forgotPasswordForm">
             <div class="form-group">
                 <label for="forgotUsername">Username</label>
@@ -104,7 +107,7 @@
                 <label for="forgotPhoneNumber">Nomor HP terdaftar</label>
                 <input type="tel" id="forgotPhoneNumber" class="form-control" maxlength="20" autocomplete="tel" required>
             </div>
-            <button type="submit" id="forgotPasswordSubmit" class="btn btn-primary">Kirim Pengajuan</button>
+            <button type="submit" id="forgotPasswordSubmit" class="btn btn-primary">Kirim via WhatsApp</button>
         </form>
     </div>
 </div>
@@ -116,6 +119,7 @@ const forgotPasswordForm = document.getElementById('forgotPasswordForm');
 const forgotPasswordError = document.getElementById('forgotPasswordError');
 const forgotPasswordSuccess = document.getElementById('forgotPasswordSuccess');
 const forgotPasswordSubmit = document.getElementById('forgotPasswordSubmit');
+const forgotPasswordWhatsAppLink = document.getElementById('forgotPasswordWhatsAppLink');
 const passwordInput = document.getElementById('password');
 const togglePassword = document.getElementById('togglePassword');
 
@@ -152,8 +156,10 @@ forgotPasswordForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     forgotPasswordError.style.display = 'none';
     forgotPasswordSuccess.hidden = true;
+    forgotPasswordWhatsAppLink.hidden = true;
     forgotPasswordSubmit.disabled = true;
-    forgotPasswordSubmit.innerText = 'Mengirim...';
+    forgotPasswordSubmit.innerText = 'Menyiapkan tautan...';
+    const whatsappWindow = window.open('about:blank', '_blank');
 
     try {
         const response = await fetch('/api/password-reset-requests', {
@@ -177,15 +183,28 @@ forgotPasswordForm.addEventListener('submit', async function(event) {
             throw new Error(validationMessage || 'Pengajuan gagal dikirim.');
         }
 
+        const whatsappUrl = result.data?.whatsapp_url;
+        if (whatsappUrl && whatsappWindow) {
+            whatsappWindow.location.href = whatsappUrl;
+        } else if (whatsappUrl) {
+            forgotPasswordWhatsAppLink.href = whatsappUrl;
+            forgotPasswordWhatsAppLink.hidden = false;
+        } else if (whatsappWindow) {
+            whatsappWindow.close();
+        }
+
         forgotPasswordForm.hidden = true;
-        forgotPasswordSuccess.textContent = result.message;
+        forgotPasswordSuccess.textContent = whatsappUrl
+            ? 'WhatsApp terbuka dengan tautan ubah sandi. Tekan Kirim di WhatsApp untuk mengirim pesan.'
+            : result.message;
         forgotPasswordSuccess.hidden = false;
     } catch (error) {
+        if (whatsappWindow) whatsappWindow.close();
         forgotPasswordError.textContent = error.message || 'Gagal terhubung ke server backend.';
         forgotPasswordError.style.display = 'block';
     } finally {
         forgotPasswordSubmit.disabled = false;
-        forgotPasswordSubmit.innerText = 'Kirim Pengajuan';
+        forgotPasswordSubmit.innerText = 'Kirim via WhatsApp';
     }
 });
 

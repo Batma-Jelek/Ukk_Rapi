@@ -1447,7 +1447,7 @@
                 <div class="card" style="margin-top: 24px;">
                     <h3 style="margin-bottom: 16px;">Pengajuan Lupa Sandi</h3>
                     <p style="color: #64748b; font-size: 13px; margin-bottom: 16px;">
-                        Verifikasi pemohon sebelum mengatur sandi. Pengajuan akan otomatis selesai setelah sandi akun disimpan melalui menu edit akun.
+                        Pengajuan baru membuka WhatsApp langsung dari halaman login. Daftar ini hanya untuk permintaan lama yang masih menunggu.
                     </p>
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse;">
@@ -2062,20 +2062,13 @@
 
                     const actionCell = row.insertCell();
                     actionCell.style.cssText = 'padding: 12px 8px; border-bottom: 1px solid #e2e8f0;';
-                    const editButton = document.createElement('button');
-                    editButton.type = 'button';
-                    editButton.className = 'btn-primary';
-                    editButton.style.cssText = 'padding: 6px 12px; margin-right: 6px;';
-                    editButton.textContent = 'Atur Sandi';
-                    editButton.addEventListener('click', () => openEditAccountModal(account));
-                    actionCell.appendChild(editButton);
-
-                    const completeButton = document.createElement('button');
-                    completeButton.type = 'button';
-                    completeButton.className = 'btn-secondary';
-                    completeButton.textContent = 'Selesai';
-                    completeButton.addEventListener('click', () => completePasswordResetRequest(resetRequest.id));
-                    actionCell.appendChild(completeButton);
+                    const sendLinkButton = document.createElement('button');
+                    sendLinkButton.type = 'button';
+                    sendLinkButton.className = 'btn-primary';
+                    sendLinkButton.style.cssText = 'padding: 6px 12px;';
+                    sendLinkButton.textContent = 'Kirim Link WA';
+                    sendLinkButton.addEventListener('click', () => sendPasswordResetLink(resetRequest.id));
+                    actionCell.appendChild(sendLinkButton);
                 });
             } catch (error) {
                 console.error('Gagal memuat pengajuan lupa sandi:', error);
@@ -2088,12 +2081,13 @@
             }
         }
 
-        async function completePasswordResetRequest(requestId) {
-            if (!confirm('Tandai pengajuan ini selesai? Pastikan pemohon sudah diverifikasi dan sandi telah diatur ulang.')) return;
+        async function sendPasswordResetLink(requestId) {
+            if (!confirm('Verifikasi data pemohon lalu buka WhatsApp dengan tautan ubah sandi?')) return;
 
+            const whatsappWindow = window.open('about:blank', '_blank');
             try {
-                const response = await fetch(`/api/password-reset-requests/${encodeURIComponent(requestId)}/complete`, {
-                    method: 'PATCH',
+                const response = await fetch(`/api/password-reset-requests/${encodeURIComponent(requestId)}/send-link`, {
+                    method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json'
@@ -2101,11 +2095,17 @@
                 });
                 const result = await response.json();
                 if (!response.ok || !result.success) {
-                    throw new Error(result.message || 'Pengajuan gagal diselesaikan.');
+                    throw new Error(result.message || 'Tautan reset sandi gagal dibuat.');
                 }
-                loadPasswordResetRequests();
+
+                if (whatsappWindow) {
+                    whatsappWindow.location.href = result.data.whatsapp_url;
+                } else {
+                    window.prompt('Popup diblokir. Salin tautan WhatsApp berikut untuk mengirim pesan:', result.data.whatsapp_url);
+                }
             } catch (error) {
-                console.error('Gagal menyelesaikan pengajuan lupa sandi:', error);
+                if (whatsappWindow) whatsappWindow.close();
+                console.error('Gagal mengirim tautan reset sandi:', error);
                 alert(error.message || 'Terjadi kesalahan jaringan.');
             }
         }
