@@ -192,19 +192,35 @@ test('pic must upload repair evidence to update status and waka can see the evid
     ], ['Accept' => 'application/json']);
     $pngResponse->assertOk();
 
+    $completedResponse = $this->post("/api/complaints/{$complaint->id}/status", [
+        '_method' => 'PATCH',
+        'status_repair' => 'Sudah Diperbaiki',
+        'photo' => UploadedFile::fake()->image('bukti-selesai.png'),
+    ], ['Accept' => 'application/json']);
+    $completedResponse->assertOk()
+        ->assertJsonPath('data.status_repair', 'Sudah Diperbaiki');
+
+    $lockedResponse = $this->post("/api/complaints/{$complaint->id}/status", [
+        '_method' => 'PATCH',
+        'status_repair' => 'Menunggu Spare Part',
+        'photo' => UploadedFile::fake()->image('bukti-perubahan.png'),
+    ], ['Accept' => 'application/json']);
+    $lockedResponse->assertUnprocessable()
+        ->assertJsonValidationErrors('status_repair');
+
     $this->assertDatabaseHas('complaints', [
         'id' => $complaint->id,
-        'status_repair' => 'Menunggu Spare Part',
+        'status_repair' => 'Sudah Diperbaiki',
         'handler_id' => $pic->id,
-        'repair_photo_path' => $pngResponse->json('data.repair_photo_path'),
+        'repair_photo_path' => $completedResponse->json('data.repair_photo_path'),
     ]);
 
     Sanctum::actingAs($waka);
 
     $this->getJson('/api/complaints')
         ->assertOk()
-        ->assertJsonPath('data.0.status_repair', 'Menunggu Spare Part')
-        ->assertJsonPath('data.0.repair_photo_path', $pngResponse->json('data.repair_photo_path'));
+        ->assertJsonPath('data.0.status_repair', 'Sudah Diperbaiki')
+        ->assertJsonPath('data.0.repair_photo_path', $completedResponse->json('data.repair_photo_path'));
 });
 
 test('complaint uploads only accept PNG or JPG base64 images', function () {

@@ -184,6 +184,16 @@ class ComplaintController extends Controller
             abort(403);
         }
 
+        if ($complaint->status_repair === 'Sudah Diperbaiki') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Laporan yang sudah diperbaiki tidak dapat diubah lagi.',
+                'errors' => [
+                    'status_repair' => ['Laporan yang sudah diperbaiki tidak dapat diubah lagi.'],
+                ],
+            ], 422);
+        }
+
         $rules = [
             'status_repair' => 'required|string|in:Belum Diperbaiki,Menunggu Spare Part,Sudah Diperbaiki',
         ];

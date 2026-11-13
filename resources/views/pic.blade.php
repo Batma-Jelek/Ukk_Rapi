@@ -822,13 +822,19 @@
                     return;
                 }
 
-                container.innerHTML = complaints.map(item => {
+                const orderedComplaints = [...complaints].sort((first, second) =>
+                    Number(first.status_repair === 'Sudah Diperbaiki') -
+                    Number(second.status_repair === 'Sudah Diperbaiki')
+                );
+
+                container.innerHTML = orderedComplaints.map(item => {
                     const roomName = item.room?.room_name || `Ruangan ${item.room_id || ''}`;
                     const timestamp = item.reported_at || item.created_at;
                     const reportTime = formatReportTime(timestamp);
                     const reportTimeLabel = reportTime === 'Waktu tidak tersedia'
                         ? reportTime
                         : `${reportTime} WIB`;
+                    const isRepaired = item.status_repair === 'Sudah Diperbaiki';
                     const photoHtml = item.photo_path
                         ? `<div style="margin-bottom: 12px; text-align: center;">
                             <img class="pic-photo" src="/storage/${String(item.photo_path).split('/').map(encodeURIComponent).join('/')}" alt="Foto kerusakan" loading="lazy">
@@ -854,19 +860,21 @@
                                 <b>Deskripsi Kerusakan:</b><br>${escapeHtml(item.description || 'Tidak ada deskripsi.')}
                             </p>
 
-                            <div class="form-group">
-                                <label for="repairStatus_${item.id}">Update Status Perbaikan:</label>
-                                <select id="repairStatus_${item.id}" class="form-control">
-                                    <option value="Belum Diperbaiki" ${item.status_repair === 'Belum Diperbaiki' ? 'selected' : ''}>Belum Diperbaiki</option>
-                                    <option value="Menunggu Spare Part" ${item.status_repair === 'Menunggu Spare Part' ? 'selected' : ''}>Menunggu Spare Part</option>
-                                    <option value="Sudah Diperbaiki" ${item.status_repair === 'Sudah Diperbaiki' ? 'selected' : ''}>Sudah Diperbaiki</option>
-                                </select>
-                                <label for="repairPhoto_${item.id}" style="display:block; margin-top:12px;">Foto Bukti Perbaikan (wajib, PNG/JPG):</label>
-                                <input type="file" id="repairPhoto_${item.id}" class="form-control" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required>
-                                <button type="button" id="saveButton_${item.id}" class="btn btn-primary"
-                                    style="margin-top:12px;"
-                                    onclick="updateRepairStatus(${Number(item.id)})">Simpan Status &amp; Foto Bukti</button>
-                            </div>
+                            ${isRepaired
+                                ? `<p style="font-size:14px; margin-bottom:16px;"><b>Status Perbaikan:</b><br>Sudah Diperbaiki</p>`
+                                : `<div class="form-group">
+                                    <label for="repairStatus_${item.id}">Update Status Perbaikan:</label>
+                                    <select id="repairStatus_${item.id}" class="form-control">
+                                        <option value="Belum Diperbaiki" ${item.status_repair === 'Belum Diperbaiki' ? 'selected' : ''}>Belum Diperbaiki</option>
+                                        <option value="Menunggu Spare Part" ${item.status_repair === 'Menunggu Spare Part' ? 'selected' : ''}>Menunggu Spare Part</option>
+                                        <option value="Sudah Diperbaiki" ${item.status_repair === 'Sudah Diperbaiki' ? 'selected' : ''}>Sudah Diperbaiki</option>
+                                    </select>
+                                    <label for="repairPhoto_${item.id}" style="display:block; margin-top:12px;">Foto Bukti Perbaikan (wajib, PNG/JPG):</label>
+                                    <input type="file" id="repairPhoto_${item.id}" class="form-control" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required>
+                                    <button type="button" id="saveButton_${item.id}" class="btn btn-primary"
+                                        style="margin-top:12px;"
+                                        onclick="updateRepairStatus(${Number(item.id)})">Simpan Status &amp; Foto Bukti</button>
+                                </div>`}
                         </div>
                     `;
                 }).join('');
