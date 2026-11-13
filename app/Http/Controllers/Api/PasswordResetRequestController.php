@@ -100,10 +100,11 @@ class PasswordResetRequestController extends Controller
             );
         });
 
-        $resetUrl = route('password.reset.form', [
+        $resetPath = route('password.reset.form', [
             'token' => $plainToken,
             'username' => $user->username,
-        ]);
+        ], false);
+        $resetUrl = rtrim((string) config('app.url'), '/').$resetPath;
         $message = "Halo {$user->fullname}, berikut tautan untuk mengubah sandi akun RAPI Sekolah: {$resetUrl}. Tautan berlaku 60 menit dan hanya dapat digunakan sekali.";
 
         return [

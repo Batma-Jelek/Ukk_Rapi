@@ -107,7 +107,7 @@
                 <label for="forgotPhoneNumber">Nomor HP terdaftar</label>
                 <input type="tel" id="forgotPhoneNumber" class="form-control" maxlength="20" autocomplete="tel" required>
             </div>
-            <button type="submit" id="forgotPasswordSubmit" class="btn btn-primary">Kirim via WhatsApp</button>
+            <button type="submit" id="forgotPasswordSubmit" class="btn btn-primary">Kirim</button>
         </form>
     </div>
 </div>

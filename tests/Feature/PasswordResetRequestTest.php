@@ -10,6 +10,8 @@ use Laravel\Sanctum\Sanctum;
 uses(RefreshDatabase::class);
 
 test('users from every role can request a password reset link via WhatsApp', function () {
+    config(['app.url' => 'https://rapi.example']);
+
     foreach (['Admin', 'PIC Ruang', 'Guru', 'Organisasi'] as $roleName) {
         $role = Role::create(['role_name' => $roleName]);
         $user = User::create([
@@ -28,8 +30,11 @@ test('users from every role can request a password reset link via WhatsApp', fun
             ->assertAccepted()
             ->assertJsonPath('success', true);
 
-        expect($response->json('data.whatsapp_url'))
-            ->toStartWith('https://wa.me/628123456789?text=');
+        $whatsappUrl = $response->json('data.whatsapp_url');
+        expect($whatsappUrl)
+            ->toStartWith('https://wa.me/628123456789?text=')
+            ->and(rawurldecode($whatsappUrl))
+            ->toContain('https://rapi.example/reset-password?');
     }
 
     expect(UserPasswordResetLink::count())->toBe(4)
