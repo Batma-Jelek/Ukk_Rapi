@@ -24,7 +24,8 @@ class AccountsImport implements ToCollection, WithHeadingRow
             $rowNumber++;
             $row = $row->toArray();
 
-            if (collect($row)->filter(fn (mixed $value): bool => filled($value))->isEmpty()) {
+            if (collect(['fullname', 'username', 'password', 'role_id', 'phone'])
+                ->every(fn (string $field): bool => blank($row[$field] ?? null))) {
                 continue;
             }
 

@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth Routes
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/users/import', AccountsImportController::class);
+    Route::get('/users/import-template', [AccountsImportController::class, 'downloadTemplate']);
 
     // Admin (Role 1): Kelola Ruangan
     Route::post('/rooms', [RoomController::class, 'store']);

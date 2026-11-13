@@ -1432,6 +1432,10 @@
                         Unggah file .xlsx atau .csv. Baris pertama (header) harus berisi: <strong>fullname, username,
                             password, role_id, phone</strong>.
                     </p>
+                    <button type="button" id="downloadAccountTemplateButton"
+                        style="background-color: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-bottom: 16px;">
+                        Download Template Excel
+                    </button>
                     <form id="importAccountForm">
                         <div class="form-group" style="margin-bottom: 16px;">
                             <input type="file" id="acc_excel" accept=".xlsx, .xls, .csv" class="form-control"
@@ -2018,6 +2022,40 @@
         downloadReportButton.addEventListener('click', downloadOperationalReport);
 
         document.getElementById('accountsRoleFilter')?.addEventListener('change', loadAccounts);
+
+        document.getElementById('downloadAccountTemplateButton')?.addEventListener('click', async function () {
+            const button = this;
+            button.disabled = true;
+            button.textContent = 'Menyiapkan template...';
+
+            try {
+                const response = await fetch('/api/users/import-template', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    }
+                });
+                if (!response.ok) {
+                    const result = await response.json();
+                    throw new Error(result.message || 'Template Excel gagal diunduh.');
+                }
+
+                const objectUrl = URL.createObjectURL(await response.blob());
+                const downloadLink = document.createElement('a');
+                downloadLink.href = objectUrl;
+                downloadLink.download = 'template-import-akun.xlsx';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                downloadLink.remove();
+                window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+            } catch (error) {
+                console.error('Gagal mengunduh template akun:', error);
+                alert(error.message || 'Terjadi kesalahan jaringan.');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Download Template Excel';
+            }
+        });
 
         async function loadPasswordResetRequests() {
             const tableBody = document.getElementById('passwordResetRequestsTableBody');

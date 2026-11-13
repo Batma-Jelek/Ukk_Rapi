@@ -5,6 +5,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Facades\Excel;
 use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
@@ -24,7 +25,7 @@ test('admin can import accounts from a csv file', function () {
 
     $file = UploadedFile::fake()->createWithContent(
         'accounts.csv',
-        "fullname,username,password,role_id,phone\nSiti,teacher1,password123,{$teacherRole->getKey()},081234567890\n",
+        "fullname,username,password,role_id,phone,,\nSiti,teacher1,password123,{$teacherRole->getKey()},081234567890,,\n,,,,,,Id Role\n,,,,,,Pic = 2\n,,,,,,Guru = 3\n,,,,,,Organisasi = 4\n",
     );
 
     $response = $this->post('/api/users/import', ['file' => $file], ['Accept' => 'application/json']);
@@ -47,6 +48,8 @@ test('admin can import accounts from a csv file', function () {
 test('account import requires authentication', function () {
     $this->postJson('/api/users/import')
         ->assertUnauthorized();
+    $this->getJson('/api/users/import-template')
+        ->assertUnauthorized();
 });
 
 test('only admins can import accounts', function () {
@@ -63,6 +66,29 @@ test('only admins can import accounts', function () {
 
     $this->postJson('/api/users/import')
         ->assertForbidden();
+    $this->getJson('/api/users/import-template')
+        ->assertForbidden();
+});
+
+test('admin can download the account import template', function () {
+    $adminRole = Role::create(['role_name' => 'Waka']);
+    $admin = User::create([
+        'username' => 'admin',
+        'password' => 'password123',
+        'fullname' => 'Admin',
+        'phone_number' => '0811111111',
+        'role_id' => $adminRole->getKey(),
+    ]);
+
+    Sanctum::actingAs($admin);
+    Excel::fake();
+
+    $this->get('/api/users/import-template')->assertOk();
+
+    Excel::assertDownloaded('template-import-akun.xlsx', function ($export): bool {
+        return $export->headings() === ['fullname', 'username', 'password', 'role_id', 'phone', '', '']
+            && count($export->array()) === 4;
+    });
 });
 
 test('invalid rows prevent all accounts in the file from being imported', function () {
